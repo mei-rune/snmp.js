@@ -1,0 +1,6 @@
+[submodule "deps/node"]
+	path = deps/node
+	url = git://github.com/joyent/node.git
+[submodule "deps/net-snmp"]
+	path = deps/net-snmp
+	url = git://net-snmp.git.sourceforge.net/gitroot/net-snmp/net-snmp
