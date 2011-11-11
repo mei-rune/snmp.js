@@ -44,6 +44,7 @@ inline int get_int_value(v8::Handle<v8::Object>& obj, const char* key, int defau
 
 
 
+
 void session_initialize(v8::Handle<v8::Object> target);
 
 #endif // _snmp_js_h

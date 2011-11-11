@@ -2,7 +2,6 @@
 #include "snmp.h"
 
 class Session : node::ObjectWrap {
-friend class Socket;
 public:
     static void Initialize(v8::Handle<v8::Object> target);
 

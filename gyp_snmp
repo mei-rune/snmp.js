@@ -5,14 +5,14 @@ import shlex
 import sys
 
 script_dir = os.path.dirname(__file__)
-uv_root = os.path.normpath(script_dir)
+snmp_root = os.path.normpath(script_dir)
 
-sys.path.insert(0, os.path.join(uv_root, 'build', 'gyp', 'pylib'))
+sys.path.insert(0, os.path.join(snmp_root, 'build', 'gyp', 'pylib'))
 import gyp
 
 # Directory within which we want all generated files (including Makefiles)
 # to be written.
-output_dir = os.path.join(os.path.abspath(uv_root), 'out')
+output_dir = os.path.join(os.path.abspath(snmp_root), 'out')
 
 def run_gyp(args):
   rc = gyp.main(args)
@@ -27,13 +27,13 @@ if __name__ == '__main__':
   # On msvs it will crash if it gets an absolute path.
   # On Mac/make it will crash if it doesn't get an absolute path.
   if sys.platform == 'win32':
-    args.append(os.path.join(uv_root, 'snmp.gyp'))
-    common_fn  = os.path.join(uv_root, 'common.gypi')
-    options_fn = os.path.join(uv_root, 'options.gypi')
+    args.append(os.path.join(snmp_root, 'snmp.gyp'))
+    common_fn  = os.path.join(snmp_root, 'common.gypi')
+    options_fn = os.path.join(snmp_root, 'options.gypi')
   else:
-    args.append(os.path.join(os.path.abspath(uv_root), 'snmp.gyp'))
-    common_fn  = os.path.join(os.path.abspath(uv_root), 'common.gypi')
-    options_fn = os.path.join(os.path.abspath(uv_root), 'options.gypi')
+    args.append(os.path.join(os.path.abspath(snmp_root), 'snmp.gyp'))
+    common_fn  = os.path.join(os.path.abspath(snmp_root), 'common.gypi')
+    options_fn = os.path.join(os.path.abspath(snmp_root), 'options.gypi')
 
   if os.path.exists(common_fn):
     args.extend(['-I', common_fn])
@@ -41,7 +41,7 @@ if __name__ == '__main__':
   if os.path.exists(options_fn):
     args.extend(['-I', options_fn])
 
-  args.append('--depth=' + uv_root)
+  args.append('--depth=' + snmp_root)
 
   # There's a bug with windows which doesn't allow this feature.
   if sys.platform != 'win32':
@@ -58,3 +58,5 @@ if __name__ == '__main__':
   gyp_args = list(args)
   print gyp_args
   run_gyp(gyp_args)
+  print 'gen projects success'
+  sys.exit(0)

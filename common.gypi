@@ -20,7 +20,7 @@
               ['library=="static_library"', {
                 'RuntimeLibrary': 1, # static debug
               }, {
-                'RuntimeLibrary': 3, # DLL debug
+                'RuntimeLibrary': 1, # DLL debug
               }],
             ],
             'Optimization': 0, # /Od, no optimization
@@ -42,7 +42,7 @@
               ['library=="static_library"', {
                 'RuntimeLibrary': 0, # static release
               }, {
-                'RuntimeLibrary': 2, # debug release
+                'RuntimeLibrary': 0, # debug release
               }],
             ],
             'Optimization': 3, # /Ox, full optimization
@@ -106,6 +106,8 @@
           # ... or that C implementations shouldn't use
           # POSIX names
           '_CRT_NONSTDC_NO_DEPRECATE',
+          'BUILDING_V8_SHARED=1',
+          'BUILDING_UV_SHARED=1',
         ],
       }],
       [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {

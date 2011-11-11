@@ -1,4 +1,5 @@
 
+.svn
 .waf*
 tags
 .lock-wscript

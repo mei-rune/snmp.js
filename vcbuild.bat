@@ -27,12 +27,7 @@ if /i "%1"=="release"      set config=Release&goto arg-ok
 if /i "%1"=="clean"        set target=Clean&goto arg-ok
 if /i "%1"=="noprojgen"    set noprojgen=1&goto arg-ok
 if /i "%1"=="nobuild"      set nobuild=1&goto arg-ok
-if /i "%1"=="test-uv"      set test=test-uv&goto arg-ok
-if /i "%1"=="test-internet"set test=test-internet&goto arg-ok
-if /i "%1"=="test-pummel"  set test=test-pummel&goto arg-ok
 if /i "%1"=="test-simple"  set test=test-simple&goto arg-ok
-if /i "%1"=="test-message" set test=test-message&goto arg-ok
-if /i "%1"=="test-all"     set test=test-all&goto arg-ok
 if /i "%1"=="test"         set test=test&goto arg-ok
 if /i "%1"=="msi"          set msi=1&goto arg-ok
 :arg-ok
@@ -46,7 +41,7 @@ goto next-arg
 if defined noprojgen goto msbuild
 
 @rem Generate the VS project.
-python gyp_snmp -f msvs -G msvs_version=2010
+cmd /c "python gyp_snmp -f msvs -G msvs_version=2010"
 if errorlevel 1 goto create-msvs-files-failed
 if not exist snmp.sln goto create-msvs-files-failed
 echo Project files generated.
@@ -89,8 +84,10 @@ if "%config%"=="Release" set test_args=--mode=release
 if "%test%"=="test" set test_args=%test_args%
 if "%test%"=="test-simple" set test_args=%test_args% simple
 
-echo running 'python tools/test.py %test_args%'
-python tools/test.py %test_args%
+echo running 'deps/node/%config%/node.exe build/node_modules/expresso/bin/expresso ./tests/* %test_args%'
+echo copy /Y "%config%\snmp.dll" /B "test/node_modules/snmp.node" /B
+copy /Y "%config%\snmp.dll" /B "test/node_modules/snmp.node" /B
+"deps/node/%config%/node.exe" build/node_modules/expresso/bin/expresso %test_args%
 goto exit
 
 :create-msvs-files-failed
