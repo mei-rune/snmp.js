@@ -38,11 +38,19 @@
         'PLATFORM="<(OS)"',
         '_LARGEFILE_SOURCE',
         '_FILE_OFFSET_BITS=64',
+      ], 
+      
+      'postbuilds':  [
+        {
+          'postbuild_name': 'Test variable in gyp file',
+          'action': [
+            'cp',
+            '${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}',
+            '${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}_gyp_touch.dylib',
+          ],
+        },
       ],
-       'outputs': [
-            '$(OutDir)$(ProjectName).node',
-      ],
-
+	  
 
       'conditions': [
         [ 'OS=="win"', {
@@ -59,13 +67,15 @@
             # we need to use node's preferred "win32" rather than gyp's preferred "win"
             'PLATFORM="win32"',
           ],
+	      'msvs_postbuild':
+                 'copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" /B "test/node_modules/snmp.node" /B',
+
 
             'libraries': [
               'Winmm.lib',
               'psapi.lib',
               'ws2_32.lib',
-              'deps/node/$(Configuration)/lib/v8_base.lib',
-              'deps/node/$(Configuration)/lib/v8_snapshot.lib',
+              'deps/node/$(Configuration)/node.lib',
               'deps/net-snmp/win32/lib/$(Configuration)/netsnmp.lib',
             ],
         }, { # Not Windows i.e. POSIX
