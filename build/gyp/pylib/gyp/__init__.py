@@ -11,7 +11,6 @@ import os.path
 import re
 import shlex
 import sys
-import traceback
 
 # Default debug modes for GYP
 debug = {}
@@ -22,16 +21,8 @@ DEBUG_VARIABLES = 'variables'
 DEBUG_INCLUDES = 'includes'
 
 def DebugOutput(mode, message):
-  if 'all' in gyp.debug.keys() or mode in gyp.debug.keys():
-    ctx = ('unknown', 0, 'unknown')
-    try:
-      f = traceback.extract_stack(limit=2)
-      if f:
-        ctx = f[0][:3]
-    except:
-      pass
-    print '%s:%s:%d:%s %s' % (mode.upper(), os.path.basename(ctx[0]),
-                              ctx[1], ctx[2], message)
+  if mode in gyp.debug.keys():
+    print "%s: %s" % (mode.upper(), message)
 
 def FindBuildFiles():
   extension = '.gyp'
@@ -275,8 +266,8 @@ def main(args):
                     help='set DEPTH gyp variable to a relative path to PATH')
   parser.add_option('-d', '--debug', dest='debug', metavar='DEBUGMODE',
                     action='append', default=[], help='turn on a debugging '
-                    'mode for debugging GYP.  Supported modes are "variables", '
-                    '"includes" and "general" or "all" for all of them.')
+                    'mode for debugging GYP.  Supported modes are "variables" '
+                    'and "general"')
   parser.add_option('-S', '--suffix', dest='suffix', default='',
                     help='suffix to add to generated files')
   parser.add_option('-G', dest='generator_flags', action='append', default=[],
