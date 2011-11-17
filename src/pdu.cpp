@@ -74,20 +74,21 @@ private:
 		pdu->Wrap(args.This());
 		return args.This();
 	}
+	
+	SNMP_ACCESSOR_DEFINE(Pdu, Int32, version)
 
-	static v8::Handle<v8::Value> Get_version(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
-		v8::HandleScope scope;
-		Pdu* wrap = ObjectWrap::Unwrap<Pdu>(info.This());
-		return scope.Close(v8::Int32::New(wrap->native_->version));               
-	}
+	//static v8::Handle<v8::Value> Get_version(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
+	//	v8::HandleScope scope;
+	//	Pdu* wrap = ObjectWrap::Unwrap<Pdu>(info.This());
+	//	return scope.Close(v8::Int32::New(wrap->native_->version));               
+	//}
 
-    static void Set_version(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) { 
-		v8::HandleScope scope;
-		Pdu* wrap = ObjectWrap::Unwrap<Pdu>(info.This());
-        wrap->native_->version = value->Int32Value();
-	}
+ //   static void Set_version(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) { 
+	//	v8::HandleScope scope;
+	//	Pdu* wrap = ObjectWrap::Unwrap<Pdu>(info.This());
+ //       wrap->native_->version = value->Int32Value();
+	//}
 
-	//SNMP_ACCESSOR_DEFINE(Pdu, Int32, version)
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, command)
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, reqid)
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, msgid)
@@ -102,29 +103,29 @@ private:
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, msgParseModel)
 	SNMP_ACCESSOR_DEFINE_GET_OID(Pdu, tDomain, tDomainLen)
 	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, community, community_len)
-	//SNMP_ACCESSOR_DEFINE_OID(Pdu, enterprise, enterprise_length)
+	SNMP_ACCESSOR_DEFINE_OID(Pdu, enterprise, enterprise_length)
 
-	
-	static v8::Handle<v8::Value> Get_enterprise(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
-		v8::HandleScope scope;
-		UNWRAP(Pdu, wrap, info);
-		v8::Handle<v8::Array> ret = v8::Array::New(wrap->native_->enterprise_length);
-        for(size_t i = 0; i < wrap->native_->enterprise_length; ++ i) {
-			ret->Set(i, v8::Int32::New(wrap->native_->enterprise[i]));
-		}
-		return scope.Close(ret);
-	}
-	
-    static void Set_enterprise(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {   \
-		v8::HandleScope scope;
-		UNWRAP(Pdu, wrap, info);
-		oid* new_value = wrap->native_->enterprise;
-        size_t new_len = wrap->native_->enterprise_length;
-		new_value = oid_parse(value, new_value, &new_len);
-		if(new_value != wrap->native_->enterprise) free(wrap->native_->enterprise);
-        wrap->native_->enterprise = new_value;
-        wrap->native_->enterprise_length = new_len;
-	}
+	//
+	//static v8::Handle<v8::Value> Get_enterprise(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
+	//	v8::HandleScope scope;
+	//	UNWRAP(Pdu, wrap, info);
+	//	v8::Handle<v8::Array> ret = v8::Array::New(wrap->native_->enterprise_length);
+ //       for(size_t i = 0; i < wrap->native_->enterprise_length; ++ i) {
+	//		ret->Set(i, v8::Int32::New(wrap->native_->enterprise[i]));
+	//	}
+	//	return scope.Close(ret);
+	//}
+	//
+ //   static void Set_enterprise(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {   \
+	//	v8::HandleScope scope;
+	//	UNWRAP(Pdu, wrap, info);
+	//	oid* new_value = wrap->native_->enterprise;
+ //       size_t new_len = wrap->native_->enterprise_length;
+	//	new_value = oid_parse(value, new_value, &new_len);
+	//	if(new_value != wrap->native_->enterprise) free(wrap->native_->enterprise);
+ //       wrap->native_->enterprise = new_value;
+ //       wrap->native_->enterprise_length = new_len;
+	//}
 
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, trap_type)
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, specific_type)
