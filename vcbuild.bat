@@ -84,9 +84,9 @@ if "%config%"=="Release" set test_args=--mode=release
 if "%test%"=="test" set test_args=%test_args%
 if "%test%"=="test-simple" set test_args=%test_args% simple
 
-echo running 'deps/node/%config%/node.exe build/node_modules/expresso/bin/expresso ./tests/* %test_args%'
 echo copy /Y "%config%\snmp.dll" /B "test/node_modules/snmp.node" /B
 copy /Y "%config%\snmp.dll" /B "test/node_modules/snmp.node" /B
+echo running 'deps/node/%config%/node.exe build/node_modules/expresso/bin/expresso ./tests/* %test_args%'
 "deps/node/%config%/node.exe" build/node_modules/expresso/bin/expresso %test_args%
 goto exit
 
@@ -98,9 +98,7 @@ goto exit
 echo vcbuild.bat [debug/release] [msi] [test/test-simple] [clean] [noprojgen] [nobuild]
 echo Examples:
 echo   vcbuild.bat                : builds debug build
-echo   vcbuild.bat release msi    : builds release build and MSI installer package
 echo   vcbuild.bat test           : builds debug build and runs tests
-echo   vcbuild.bat release test-uv: builds release build and runs --libuv tests
 goto exit
 
 :exit

@@ -68,7 +68,7 @@
             'PLATFORM="win32"',
           ],
 	      'msvs_postbuild':
-                 'copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" /B "test/node_modules/snmp.node" /B',
+                 'copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" /B "$(ProjectDir)test\node_modules\snmp.node" /B',
 
 
             'libraries': [
@@ -115,6 +115,7 @@
 
           'inputs': [
              'test/require.test.js',
+             'test/pdu.test.js',
           ],
 
 		  
