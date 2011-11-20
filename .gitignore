@@ -33,4 +33,6 @@ ipch/
 *-nodegyp*
 /gyp-mac-tool
 
+lib/snmp.node
+
 test/node_modules
