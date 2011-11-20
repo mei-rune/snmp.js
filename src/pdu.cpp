@@ -1,11 +1,19 @@
 
 #include "snmp.h"
 
+static v8::Persistent<v8::String> oid_symbol;
+static v8::Persistent<v8::String> type_symbol;
+static v8::Persistent<v8::String> value_symbol;
 
 class Pdu : node::ObjectWrap {
 public:
     static void Initialize(v8::Handle<v8::Object> target){
 		v8::HandleScope scope;
+
+		
+        oid_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("oid"));
+        type_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("type"));
+        value_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("value"));
 
 		v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);    
 		t->SetClassName(v8::String::NewSymbol("Pdu"));
@@ -41,6 +49,12 @@ public:
 
 
 		target->Set(v8::String::NewSymbol("Pdu"), t->GetFunction());
+		
+		target->Set(v8::String::NewSymbol("appendVariableList"),  v8::FunctionTemplate::New(Append)->GetFunction());
+		target->Set(v8::String::NewSymbol("getVariableList"),  v8::FunctionTemplate::New(Get)->GetFunction());
+		target->Set(v8::String::NewSymbol("clearVariableList"),  v8::FunctionTemplate::New(Clear)->GetFunction());
+
+		
 	}
 
     virtual ~Pdu() {
@@ -79,14 +93,14 @@ private:
 
 	//static v8::Handle<v8::Value> Get_version(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
 	//	v8::HandleScope scope;
-	//	Pdu* wrap = ObjectWrap::Unwrap<Pdu>(info.This());
+	//	UNWRAP(Pdu, wrap, info.This());
 	//	return scope.Close(v8::Int32::New(wrap->native_->version));               
 	//}
 
- //   static void Set_version(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) { 
+    //static void Set_version(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) { 
 	//	v8::HandleScope scope;
-	//	Pdu* wrap = ObjectWrap::Unwrap<Pdu>(info.This());
- //       wrap->native_->version = value->Int32Value();
+	//	UNWRAP(Pdu, wrap, info.This());
+    //  wrap->native_->version = value->Int32Value();
 	//}
 
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, command)
@@ -103,12 +117,30 @@ private:
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, msgParseModel)
 	SNMP_ACCESSOR_DEFINE_GET_OID(Pdu, tDomain, tDomainLen)
 	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, community, community_len)
+
+	
+	//static v8::Handle<v8::Value> Get_community(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
+	//	v8::HandleScope scope;
+	//	UNWRAP(Pdu, wrap, info.This());
+	//	return node::Buffer::New((char*)wrap->native_->community, sizeof(u_char)*wrap->native_->community_len)->handle_;
+	//}
+
+ //   static void Set_community(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {
+	//	v8::HandleScope scope; 
+	//	UNWRAP(Pdu, wrap, info.This());
+	//	node::Buffer* buffer = node::ObjectWrap::Unwrap<node::Buffer>(value->ToObject());            
+	//	if(0 != wrap->native_->community) free(wrap->native_->community);                          
+ //       wrap->native_->community = (u_char*)malloc(sizeof(char)*node::Buffer::Length(buffer));
+	//	memcpy(wrap->native_->community, node::Buffer::Data(buffer), node::Buffer::Length(buffer));
+ //       wrap->native_->community_len = node::Buffer::Length(buffer)/sizeof(u_char);
+	//}
+
 	SNMP_ACCESSOR_DEFINE_OID(Pdu, enterprise, enterprise_length)
 
 	//
 	//static v8::Handle<v8::Value> Get_enterprise(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
 	//	v8::HandleScope scope;
-	//	UNWRAP(Pdu, wrap, info);
+	//	UNWRAP(Pdu, wrap, info.This());
 	//	v8::Handle<v8::Array> ret = v8::Array::New(wrap->native_->enterprise_length);
  //       for(size_t i = 0; i < wrap->native_->enterprise_length; ++ i) {
 	//		ret->Set(i, v8::Int32::New(wrap->native_->enterprise[i]));
@@ -118,10 +150,10 @@ private:
 	//
  //   static void Set_enterprise(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {   \
 	//	v8::HandleScope scope;
-	//	UNWRAP(Pdu, wrap, info);
+	//	UNWRAP(Pdu, wrap, info.This());
 	//	oid* new_value = wrap->native_->enterprise;
  //       size_t new_len = wrap->native_->enterprise_length;
-	//	new_value = oid_parse(value, new_value, &new_len);
+	//	new_value = value_to_oid(value, new_value, &new_len);
 	//	if(new_value != wrap->native_->enterprise) free(wrap->native_->enterprise);
  //       wrap->native_->enterprise = new_value;
  //       wrap->native_->enterprise_length = new_len;
@@ -131,23 +163,23 @@ private:
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, specific_type)
 
 	//	SNMP_SET_ACCESSOR(t, agent_addr)
-
+	
+	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, securityEngineID, securityEngineIDLen)
 	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, contextEngineID, contextEngineIDLen)
 	SNMP_ACCESSOR_DEFINE_STRING(Pdu, contextName, contextNameLen)
-	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, securityEngineID, securityEngineIDLen)
 	SNMP_ACCESSOR_DEFINE_STRING(Pdu, securityName, securityNameLen)
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, priority)
 	SNMP_ACCESSOR_DEFINE(Pdu, Int32, range_subid)
 
 	//static v8::Handle<v8::Value> Get_version(const v8::Arguments& args){
 	//	v8::HandleScope scope;
-	//	UNWRAP(Pdu, wrap, args);
+	//	UNWRAP(Pdu, wrap, args.This());
 	//	return v8::Int32::New(wrap->native_->version);
 	//}
 	//
 	//static v8::Handle<v8::Value> Set_version(const v8::Arguments& args){
 	//	v8::HandleScope scope;
-	//	UNWRAP(Pdu, wrap, args);
+	//	UNWRAP(Pdu, wrap, args.This());
 	//	
 	//	v8::Handle<v8::Value> value = args[0];
 	//	if(!value->IsInt32()){
@@ -157,10 +189,303 @@ private:
 	//	wrap->native_->version = value->Int32Value();
 	//	return v8::Undefined();
 	//}
+	
+	
+	static v8::Handle<v8::Value> GetVB(const netsnmp_variable_list* vb) {
+
+		v8::Handle<v8::Object> ret = v8::Object::New();
+		ret->Set(oid_symbol, oid_to_value(vb->name, vb->name_length));
+		ret->Set(type_symbol, v8::Int32::New(vb->type));
+
+		v8::Handle<v8::Value> exception;
+		switch (vb->type) {
+			case ASN_INTEGER:
+			case ASN_UNSIGNED:
+			case ASN_TIMETICKS:
+			case ASN_COUNTER: {
+				ret->Set(value_symbol, v8::Uint32::New(*(vb->val.integer)));
+				break;
+			}
+			case ASN_OBJECT_ID:
+			case ASN_PRIV_IMPLIED_OBJECT_ID:
+			case ASN_PRIV_INCL_RANGE:
+			case ASN_PRIV_EXCL_RANGE: {
+				ret->Set(value_symbol, oid_to_value(vb->val.objid, vb->val_len));
+				break;
+			}
+			case ASN_IPADDRESS: /* snmp_build_var_op treats IPADDR like a string */
+			case ASN_PRIV_IMPLIED_OCTET_STR:
+			case ASN_OCTET_STR:
+			case ASN_BIT_STR:
+			case ASN_OPAQUE:
+			case ASN_NSAP: {
+				ret->Set(value_symbol, v8::String::New((const char*)vb->val.string, vb->val_len));
+				break;
+			}
+			case SNMP_NOSUCHOBJECT:
+			case SNMP_NOSUCHINSTANCE:
+			case SNMP_ENDOFMIBVIEW:
+			case ASN_NULL: {
+				ret->Set(value_symbol, v8::Null());
+				break;
+			}
+		#ifdef NETSNMP_WITH_OPAQUE_SPECIAL_TYPES
+			case ASN_OPAQUE_I64:
+			case ASN_OPAQUE_U64:
+		#endif                          /* NETSNMP_WITH_OPAQUE_SPECIAL_TYPES */
+			case ASN_COUNTER64: {
+				int64_t v = 0;
+				memmove(&v, vb->val.counter64, vb->val_len);
+				ret->Set(value_symbol, to_int_value(v));
+				break;
+			}
+		#ifdef NETSNMP_WITH_OPAQUE_SPECIAL_TYPES
+			case ASN_OPAQUE_FLOAT: {
+				ret->Set(value_symbol, v8::Number::New(*(vb->val.floatVal)));
+				break;
+			}
+
+			case ASN_OPAQUE_DOUBLE: {
+				ret->Set(value_symbol, v8::Number::New(*(vb->val.doubleVal)));
+				break;
+			}
+
+		#endif                          /* NETSNMP_WITH_OPAQUE_SPECIAL_TYPES */
+
+			default: {
+				exception = v8::String::New("Internal error in type switching.");
+				goto failure;
+			}
+		}
+
+		return ret;
+failure:
+		return v8::ThrowException(exception);
+	}
+	
+	static v8::Handle<v8::Value> AppendVB(netsnmp_pdu* pdu
+		, v8::Handle<v8::Value>& hOid
+		, v8::Handle<v8::Value>& hType
+		, v8::Handle<v8::Value>& value) {
+
+		oid     name_loc[MAX_OID_LEN];
+		oid*    name = name_loc;
+		size_t  name_len = sizeof(name_loc);
+
+		if(NULL == value_to_oid(hOid, name, &name_len)) {
+			return ThrowTypeError("argument name must be a int array.");
+		}
+		
+		u_char type = (u_char)hType->Uint32Value();
+		if('=' == type) {
+		    v8::String::Utf8Value u8(value->ToString());
+			int ret = snmp_add_var(pdu, name, name_len, type,  *u8);
+
+			if(0 != ret){
+				if(name != name_loc) {
+					free(name);
+				}
+				std::string err = "argument value style error - ";
+				err.append(snmp_api_errstring(ret));
+				return ThrowSyntaxError(err.c_str());
+			}
+			return v8::Undefined();
+		}
+
+		netsnmp_variable_list *vars = 0;
+		vars = snmp_varlist_add_variable(&vars, name, name_len, type, NULL, 0);
+		if(name != name_loc) {
+			free(name);
+		}
+		if(0 == vars) {
+			return ThrowError("memory allocate error.");
+		}
+
+		v8::Handle<v8::Value> exception;
+		switch (type) {
+			case ASN_INTEGER:
+			case ASN_UNSIGNED:
+			case ASN_TIMETICKS:
+			case ASN_COUNTER: {
+				if (ASN_INTEGER == type) {
+					*(vars->val.integer) = value->Int32Value();
+				} else {
+					*(vars->val.integer) = value->Uint32Value();
+				}
+				vars->val_len = 4;
+				break;
+            }
+			case ASN_OBJECT_ID:
+			case ASN_PRIV_IMPLIED_OBJECT_ID:
+			case ASN_PRIV_INCL_RANGE:
+			case ASN_PRIV_EXCL_RANGE: {
+				name = vars->val.objid;
+				name_len = sizeof(vars->buf);
+
+				if(NULL == value_to_oid(value, name, &name_len)) {
+					exception = v8::String::New("argument value must be a int array.");
+					goto failure;
+				}
+
+				vars->val.objid = name;
+				vars->val_len = name_len;
+				break;
+            }
+			case ASN_IPADDRESS: /* snmp_build_var_op treats IPADDR like a string */
+
+				/** FALL THROUGH */
+			case ASN_PRIV_IMPLIED_OCTET_STR:
+			case ASN_OCTET_STR:
+			case ASN_BIT_STR:
+			case ASN_OPAQUE:
+			case ASN_NSAP: {
+				v8::String::Utf8Value u8(value->ToString());
+				vars->val_len = u8.length();
+				if (ASN_IPADDRESS == type && 4 != vars->val_len) {
+					exception = v8::String::New("ipaddress length must be equal 4.");
+					goto failure;
+				}
+
+				if (vars->val_len >= sizeof(vars->buf)) {
+					vars->val.string = (u_char *) malloc(vars->val_len + 1);
+				}
+				if (vars->val.string == NULL) {
+					exception = v8::String::New("no storage for string.");
+					goto failure;
+				}
+				memmove(vars->val.string, *u8, vars->val_len);
+				/*
+				 * Make sure the string is zero-terminated; some bits of code make
+				 * this assumption.  Easier to do this here than fix all these wrong
+				 * assumptions.  
+				 */
+				vars->val.string[vars->val_len] = '\0';
+				break;
+						   }
+			case SNMP_NOSUCHOBJECT:
+			case SNMP_NOSUCHINSTANCE:
+			case SNMP_ENDOFMIBVIEW:
+			case ASN_NULL:
+				vars->val_len = 0;
+				vars->val.string = NULL;
+				break;
+
+		#ifdef NETSNMP_WITH_OPAQUE_SPECIAL_TYPES
+			case ASN_OPAQUE_I64:
+			case ASN_OPAQUE_U64:
+		#endif                          /* NETSNMP_WITH_OPAQUE_SPECIAL_TYPES */
+			case ASN_COUNTER64: {
+				int64_t v = value->IntegerValue();
+				vars->val_len = sizeof(int64_t);
+				memmove(vars->val.counter64, &v, vars->val_len);
+				break;
+			}
+		#ifdef NETSNMP_WITH_OPAQUE_SPECIAL_TYPES
+			case ASN_OPAQUE_FLOAT: {
+				float v = (float)value->NumberValue();
+				vars->val_len = sizeof(float);
+				memmove(vars->val.floatVal, &v, vars->val_len);
+				break;
+			}
+
+			case ASN_OPAQUE_DOUBLE: {
+				double v = value->NumberValue();
+				vars->val_len = sizeof(double);
+				memmove(vars->val.counter64, &v, vars->val_len);
+				break;
+			}
+
+		#endif                          /* NETSNMP_WITH_OPAQUE_SPECIAL_TYPES */
+
+			default: {
+				exception = v8::String::New("Internal error in type switching.");
+				goto failure;
+			}
+		}
+
+		if (0 == pdu->variables) {
+			pdu->variables = vars;
+		} else {
+			netsnmp_variable_list* vtmp = pdu->variables;
+			for (; vtmp->next_variable;
+				 vtmp = vtmp->next_variable);
+
+			vtmp->next_variable = vars;
+		}
+
+		return v8::Undefined();
+failure:
+		if(0 != vars) {
+			snmp_free_var(vars);
+		}
+		return v8::ThrowException(exception);
+	}
+
+	static v8::Handle<v8::Value> Append(const v8::Arguments& args) {
+		v8::HandleScope scope;
+		if(3 > args.Length()) {
+			return ThrowError("Must pass pdu, name, value and option type arguments to set.");
+		}
+		if(4 < args.Length()) {
+			return ThrowError("Arguments too much.");
+		}
+		
+		v8::Handle<v8::Value> type = v8::Undefined();
+		v8::Local<v8::Value> value;
+
+
+		if(3 == args.Length()) {
+			value = args[2];
+		} else {
+			type  = args[2];
+			value = args[3];
+		}
+
+		UNWRAP(Pdu, wrap, args[0]->ToObject());
+		return AppendVB(wrap->native_, args[1], type, value); 
+	}
+
+	
+	static v8::Handle<v8::Value> Get(const v8::Arguments& args) {
+		v8::HandleScope scope;
+		if(2 != args.Length()) {
+			return ThrowError("Must pass pdu, and index arguments to get.");
+		}
+		
+
+		UNWRAP(Pdu, wrap, args[0]->ToObject());
+		int idx = args[1]->Int32Value();
+		
+		netsnmp_variable_list* vtmp = wrap->native_->variables;
+		for(int i = 0; i < idx; ++ i) {
+			if(0 == vtmp) {
+				return ThrowRangeError("Index too big.");
+			}
+			vtmp = vtmp->next_variable;
+		}
+		if(0 == vtmp) {
+			return v8::Undefined();
+		}
+
+		return GetVB(vtmp); 
+	}
+	static v8::Handle<v8::Value> Clear(const v8::Arguments& args) {
+		v8::HandleScope scope;
+		if(1 != args.Length()) {
+			return ThrowError("Must pass pdu arguments to get.");
+		}
+
+		UNWRAP(Pdu, wrap, args[0]->ToObject());
+		snmp_free_varbind(wrap->native_->variables);
+		wrap->native_->variables = 0;
+		return v8::Undefined();
+	}
 
 	static v8::Handle<v8::Value> Close(const v8::Arguments& args) {
 		v8::HandleScope scope;
-		ObjectWrap::Unwrap<Pdu>(args.This())->close();
+		UNWRAP(Pdu, wrap, args.This());
+		
+		wrap->close();
 		return v8::Undefined();
 	}
 
@@ -176,51 +501,7 @@ void pdu_initialize(v8::Handle<v8::Object> target) {
 
 	//static v8::Handle<v8::Value> Get(const v8::Arguments& args){
 	//	v8::HandleScope scope;
-	//	UNWRAP(VariableBindings, wrap, args);
-
-	//	return v8::Undefined();
-	//}
-
-	//static v8::Handle<v8::Value> Append(const v8::Arguments& args){
-	//	v8::HandleScope scope;
-	//	UNWRAP(VariableBindings, wrap, args);
-	//	if(2 > args.Length()) {
-	//		return ThrowError("Must pass name, value and option type arguments to set.");
-	//	}
-	//	if(3 < args.Length()) {
-	//		return ThrowError("Arguments too much.");
-	//	}
-	//	oid     name_loc[1024];
-	//	oid*    name = name_loc;
-	//	size_t  name_len = 1024;
-
-	//	if(NULL ==    oid_parse(args[0], name, &name_len)) {
-	//		return ThrowError("argument name must be a int array.");
-	//	}
-	//	
-	//	u_char type = '=';
-	//	v8::Handle<v8::Value> value;
-
-
-	//	if(2 == args.Length()) {
-	//		value = args[1];
-	//	} else {
-	//		type = (u_char)args[1]->Uint32Value();
-	//		value = args[2];
-	//	}
-
-	//	if('=' == type) {
-	//		int ret = snmp_add_var(netsnmp_pdu *, const oid *, size_t, char,
-	//			const char *);
-
-	//		if(0 != ret){
-	//				snmp_api_errstring(err);
-
-	//			std::string err
-	//			return ThrowError("argument value must be a int array.");
-	//		}
-	//	}
-
+	//	UNWRAP(VariableBindings, wrap, args.This());
 
 	//	return v8::Undefined();
 	//}

@@ -84,9 +84,20 @@ if "%config%"=="Release" set test_args=--mode=release
 if "%test%"=="test" set test_args=%test_args%
 if "%test%"=="test-simple" set test_args=%test_args% simple
 
-echo copy /Y "%config%\snmp.dll" /B "test/node_modules/snmp.node" /B
-copy /Y "%config%\snmp.dll" /B "test/node_modules/snmp.node" /B
-echo running 'deps/node/%config%/node.exe build/node_modules/expresso/bin/expresso ./tests/* %test_args%'
+
+@rem if NOT exist "$(ProjectDir)test\node_modules". mkdir $(ProjectDir)test\node_modules
+@rem if NOT exist "$(ProjectDir)test\node_modules\snmp". mkdir $(ProjectDir)test\node_modules\snmp
+@rem if NOT exist "$(ProjectDir)test\node_modules\snmp\lib". mkdir $(ProjectDir)test\node_modules\snmp\lib
+@rem copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" "$(ProjectDir)lib\snmp.node"
+@rem copy /Y "$(ProjectDir)package.json" "$(ProjectDir)test\node_modules\snmp\package.json"
+@rem copy /Y "$(ProjectDir)index.js" "$(ProjectDir)test\node_modules\snmp\index.js"
+@rem copy /Y "$(ProjectDir)lib\*.*" "$(ProjectDir)test\node_modules\snmp\lib"
+
+if NOT exist test\node_modules. mkdir test\node_modules
+if NOT exist test\node_modules\snmp. mkdir test\node_modules\snmp
+if NOT exist test\node_modules\snmp\lib. mkdir test\node_modules\snmp\lib
+copy /Y "%config%\snmp.dll" "lib\snmp.node"
+copy /Y "lib\*.*" "test\node_modules\snmp\lib\"
 "deps/node/%config%/node.exe" build/node_modules/expresso/bin/expresso %test_args%
 goto exit
 

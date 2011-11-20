@@ -1,28 +1,43 @@
 module.exports = {
     'require pdu': function (beforeExit, assert) {
         var snmp = require('snmp');
-        var pdu = new snmp.Pdu(snmp.SNMP_VERSION_1);
+        var pdu = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
         pdu.close();
     },
     'new pdu with no argument': function (beforeExit, assert) {
         var snmp = require('snmp');
         try {
-            var pdu = new snmp.Pdu();
+            var pdu = new snmp.Native.Pdu();
             assert.fail();
         } catch (e) {
             assert.equal('Must pass a integer argument to constructor.', e.message);
         }
     },
-    'new pdu with no argument': function (beforeExit, assert) {
+    'create pdu': function (beforeExit, assert) {
         var snmp = require('snmp');
-        var pdu = new snmp.Pdu(snmp.SNMP_VERSION_1);
+        assert.equal(snmp.createPdu("get").command, snmp.Constants.SNMP_MSG_GET);
+        assert.equal(snmp.createPdu("getnext").command, snmp.Constants.SNMP_MSG_GETNEXT);
+        assert.equal(snmp.createPdu("next").command, snmp.Constants.SNMP_MSG_GETNEXT);
+        assert.equal(snmp.createPdu("set").command, snmp.Constants.SNMP_MSG_SET);
+        assert.equal(snmp.createPdu("respone").command, snmp.Constants.SNMP_MSG_RESPONSE);
+        assert.equal(snmp.createPdu("getbulk").command, snmp.Constants.SNMP_MSG_GETBULK);
+        assert.equal(snmp.createPdu("bulk").command, snmp.Constants.SNMP_MSG_GETBULK);
+        assert.equal(snmp.createPdu("trap").command, snmp.Constants.SNMP_MSG_TRAP);
+        assert.equal(snmp.createPdu("inform").command, snmp.Constants.SNMP_MSG_INFORM);
+        assert.equal(snmp.createPdu("trap2").command, snmp.Constants.SNMP_MSG_TRAP2);
+        assert.equal(snmp.createPdu("report").command, snmp.Constants.SNMP_MSG_REPORT);
+
+    },
+    'new pdu with get argument': function (beforeExit, assert) {
+        var snmp = require('snmp');
+        var pdu = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
         pdu.version = -11;
         assert.equal(-11, pdu.version);
-        
-        
+
+
         pdu.command = -3;
         assert.equal(-3, pdu.command);
-        
+
         pdu.reqid = 4;
         assert.equal(4, pdu.reqid);
 
@@ -94,5 +109,38 @@ module.exports = {
         assert.equal(19, pdu.range_subid);
 
         pdu.close();
+    },
+
+    'create pdu with vb': function (beforeExit, assert) {
+        var snmp = require('snmp');
+        var pdu = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
+        var vb = pdu.variableBindings;
+        vb.add([1,2,3,4,5], snmp.DATA_TYPE.ASN_INTEGER, 23);
+        assert.equal(vb.get([1,2,3,4,5]).value, 23);
+        vb.clear();
+        vb.add([1,2,3,4,5], snmp.DATA_TYPE.ASN_INTEGER, "24");
+        assert.equal(vb.get([1,2,3,4,5]).value, 24);
+
+        
+        vb.clear();
+        vb.add([1,2,3,4,5], snmp.DATA_TYPE.ASN_INTEGER, "aaa24");
+        assert.equal(vb.get([1,2,3,4,5]).value, 0);
+
+        
+        vb.clear();
+        vb.add("1.2.3.4.5", snmp.DATA_TYPE.ASN_INTEGER, "24");
+        assert.equal(vb.get([1,2,3,4,5]).value, 24);
+
+    },
+
+    'set vb': function (beforeExit, assert) {
+        var snmp = require('snmp');
+        var pdu = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
+        try {
+           pdu.variableBindings = 23;
+           assert.fail("test variableBindings is readOnly");
+        } catch (e) {
+           assert.equal(e.message, "variableBindings is readonly.");
+        }
     },
 };

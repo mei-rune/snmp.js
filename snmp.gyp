@@ -29,6 +29,10 @@
         'src/session.cpp',
         'src/pdu.cpp',
         'src/snmp.h',
+		'lib/index.js',
+		'lib/pdu.js',
+		'index.js',
+		'package.json',
         'common.gypi',
       ],
 
@@ -39,16 +43,27 @@
         '_LARGEFILE_SOURCE',
         '_FILE_OFFSET_BITS=64',
       ], 
-      
+      	      'msvs_postbuild':
+                 'copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" /B "$(ProjectDir)test\node_modules\snmp.node" /B',
+
       'postbuilds':  [
-        {
-          'postbuild_name': 'Test variable in gyp file',
-          'action': [
-            'cp',
-            '${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}',
-            '${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}_gyp_touch.dylib',
-          ],
-        },
+		[ 'OS=="win"', {
+			  'postbuild_name': 'copy snmp to node_modules',
+			  'action': [
+				'copy',
+				'/Y',
+				'$(ProjectDir)$(Configuration)\snmp.dll',
+				'$(ProjectDir)test\node_modules\snmp.node',
+			  ],
+			},{
+			  'postbuild_name': 'copy snmp to node_modules',
+			  'action': [
+				'cp',
+				'$(BUILT_PRODUCTS_DIR)/$(Configuration)/snmp.dll',
+				'$(BUILT_PRODUCTS_DIR)/test\node_modules/snmp.node',
+			  ],
+			}
+		]
       ],
 	  
 
@@ -67,9 +82,6 @@
             # we need to use node's preferred "win32" rather than gyp's preferred "win"
             'PLATFORM="win32"',
           ],
-	      'msvs_postbuild':
-                 'copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" /B "$(ProjectDir)test\node_modules\snmp.node" /B',
-
 
             'libraries': [
               'Winmm.lib',
@@ -105,17 +117,19 @@
       },
 
       'sources': [
-        'test/require.test.js',
+             'test/require.test.js',
+             'test/pdu.test.js',
+             'test/session.test.js',
       ],
 	  
       'actions': [
-
         {
           'action_name': 'expresso',
 
           'inputs': [
              'test/require.test.js',
              'test/pdu.test.js',
+             'test/session.test.js',
           ],
 
 		  

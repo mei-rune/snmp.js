@@ -11,7 +11,7 @@ public:
 		t->InstanceTemplate()->SetInternalFieldCount(1);
 
 		NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
-			target->Set(v8::String::NewSymbol("Session"), t->GetFunction());
+		target->Set(v8::String::NewSymbol("Session"), t->GetFunction());
 	}
 
     virtual ~Session() {
@@ -52,7 +52,8 @@ private:
 
 	static v8::Handle<v8::Value> Close(const v8::Arguments& args) {
 		v8::HandleScope scope;
-		ObjectWrap::Unwrap<Session>(args.This())->close();
+		UNWRAP(Session, wrap, args.This());
+		wrap->close();
 		return v8::Undefined();
 	}
 
