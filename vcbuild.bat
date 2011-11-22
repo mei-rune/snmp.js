@@ -19,9 +19,13 @@ set nobuild=
 set test=
 set test_args=
 set msi=
+set net-snmp=
+set node=
 
 :next-arg
 if "%1"=="" goto args-done
+if /i "%1"=="net-snmp"     set net-snmp=1&goto arg-ok
+if /i "%1"=="node"         set node=1&goto arg-ok
 if /i "%1"=="debug"        set config=Debug&goto arg-ok
 if /i "%1"=="release"      set config=Release&goto arg-ok
 if /i "%1"=="clean"        set target=Clean&goto arg-ok
@@ -35,6 +39,18 @@ shift
 goto next-arg
 :args-done
 
+@rem Skip node build if requested.
+if not defined node goto net-snmp-build 
+cmd /c "cd deps/node && call vcbuild.bat"
+if errorlevel 1 goto exit
+echo node build.
+
+:net-snmp-build
+@rem Skip node build if requested.
+if not defined net-snmp goto project-gen
+call build_net_snmp.bat
+if errorlevel 1 goto exit
+echo net-snmp build.
 
 :project-gen
 @rem Skip project generation if requested.
@@ -98,6 +114,8 @@ if NOT exist test\node_modules\snmp. mkdir test\node_modules\snmp
 if NOT exist test\node_modules\snmp\lib. mkdir test\node_modules\snmp\lib
 copy /Y "%config%\snmp.dll" "lib\snmp.node"
 copy /Y "lib\*.*" "test\node_modules\snmp\lib\"
+copy /Y "package.json" "test\node_modules\snmp\package.json"
+copy /Y "index.js" "test\node_modules\snmp\index.js"
 "deps/node/%config%/node.exe" build/node_modules/expresso/bin/expresso %test_args%
 goto exit
 
