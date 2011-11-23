@@ -32,7 +32,6 @@ public:
             from_int32(code), wrap->pdu_.IsEmpty()?Pdu::fatchPdu(pdu):wrap->pdu_
         };
 
-
         // get process from global scope.
         v8::Local<v8::Object> global = v8::Context::GetCurrent()->Global();
         v8::Local<v8::Object> process = global->Get(process_symbol)->ToObject();
@@ -103,7 +102,7 @@ public:
 			}
 		
 			v8::Handle<v8::Object> obj = args[0]->ToObject();
-			session->arguments_.version = get_int_value(obj, "version", session->arguments_.version);
+			session->arguments_.version = to_int32(obj, "version", session->arguments_.version);
 		}
 		return args.This();
 	}

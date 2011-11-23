@@ -33,7 +33,7 @@ static v8::Handle<v8::Value> ParseOid(const v8::Arguments& args) {
 	oid* name = name_loc;
 	size_t name_len = sizeof(name_loc);
 
-	name = value_to_oid(args[0], name, &name_len);
+	name = to_oid(args[0], name, &name_len);
 	if(0 == name) {
 		return v8::Undefined();
 	}

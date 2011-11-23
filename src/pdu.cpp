@@ -164,14 +164,19 @@ public:
 	//	return node::Buffer::New((char*)wrap->native_->community, sizeof(u_char)*wrap->native_->community_len)->handle_;
 	//}
 
- //   static void Set_community(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {
+    //static void Set_community(v8::Local<v8::String> propertyName, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {
 	//	v8::HandleScope scope; 
 	//	UNWRAP(Pdu, wrap, info.This());
-	//	node::Buffer* buffer = node::ObjectWrap::Unwrap<node::Buffer>(value->ToObject());            
-	//	if(0 != wrap->native_->community) free(wrap->native_->community);                          
- //       wrap->native_->community = (u_char*)malloc(sizeof(char)*node::Buffer::Length(buffer));
+	//	UNWRAP(node::Buffer, buffer, value->ToObject());
+	//	     
+	//	if(0 == wrap->native_->community
+	//	  || wrap->native_->community_len < node::Buffer::Length(buffer)) {
+	//	    free(wrap->native_->community);
+    //        wrap->native_->community = (u_char*)malloc(node::Buffer::Length(buffer) + 4);
+	//	}
+
 	//	memcpy(wrap->native_->community, node::Buffer::Data(buffer), node::Buffer::Length(buffer));
- //       wrap->native_->community_len = node::Buffer::Length(buffer)/sizeof(u_char);
+    //    wrap->native_->community_len = node::Buffer::Length(buffer);
 	//}
 
 	SNMP_ACCESSOR_DEFINE_OID(Pdu, enterprise, enterprise_length)
@@ -192,7 +197,7 @@ public:
 	//	UNWRAP(Pdu, wrap, info.This());
 	//	oid* new_value = wrap->native_->enterprise;
  //       size_t new_len = wrap->native_->enterprise_length;
-	//	new_value = value_to_oid(value, new_value, &new_len);
+	//	new_value = to_oid(value, new_value, &new_len);
 	//	if(new_value != wrap->native_->enterprise) free(wrap->native_->enterprise);
  //       wrap->native_->enterprise = new_value;
  //       wrap->native_->enterprise_length = new_len;
@@ -311,7 +316,7 @@ failure:
 		oid*    name = name_loc;
 		size_t  name_len = sizeof(name_loc);
 
-		if(NULL == value_to_oid(hOid, name, &name_len)) {
+		if(NULL == to_oid(hOid, name, &name_len)) {
 			return ThrowTypeError("argument name must be a int array.");
 		}
 		
@@ -361,7 +366,7 @@ failure:
 				name = vars->val.objid;
 				name_len = sizeof(vars->buf);
 
-				if(NULL == value_to_oid(value, name, &name_len)) {
+				if(NULL == to_oid(value, name, &name_len)) {
 					exception = v8::String::New("argument value must be a int array.");
 					goto failure;
 				}

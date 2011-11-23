@@ -140,15 +140,39 @@ inline v8::Handle<v8::Value> from_oid(oid* name, size_t len) {
 	return ret;
 }
 
-inline int get_int_value(v8::Handle<v8::Object>& obj, const char* key, int defaultValue) {
+inline int to_int32(v8::Handle<v8::Object>& obj, const char* key, int defaultValue) {
     v8::Handle<v8::Value> result = obj->Get(v8::String::New(key));
 	if(!result->IsNumber()){
 		return defaultValue;
 	}
-	return result->ToInt32()->Value();
+	return result->Int32Value();
 }
 
-inline oid* value_to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
+inline int to_uint32(v8::Handle<v8::Object>& obj, const char* key, uint32_t defaultValue) {
+    v8::Handle<v8::Value> result = obj->Get(v8::String::New(key));
+	if(!result->IsNumber()){
+		return defaultValue;
+	}
+	return result->Uint32Value();
+}
+
+inline int64_t to_int64(v8::Handle<v8::Object>& obj, const char* key, int64_t defaultValue) {
+    v8::Handle<v8::Value> result = obj->Get(v8::String::New(key));
+	if(!result->IsNumber()){
+		return defaultValue;
+	}
+	return result->IntegerValue();
+}
+
+inline uint64_t to_uint64(v8::Handle<v8::Object>& obj, const char* key, uint64_t defaultValue) {
+    v8::Handle<v8::Value> result = obj->Get(v8::String::New(key));
+	if(!result->IsNumber()){
+		return defaultValue;
+	}
+	return result->IntegerValue();
+}
+
+inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 	if(s->IsString()){
 		v8::String::Utf8Value u8(s->ToString());
 		oid* buf = out;
@@ -245,7 +269,7 @@ inline oid* value_to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 		UNWRAP(this_type, wrap, info.This());                                     \
 		oid* new_value = wrap->native_->name;                              \
         size_t new_len = wrap->native_->len;                               \
-		new_value = value_to_oid(value, new_value, &new_len);              \
+		new_value = to_oid(value, new_value, &new_len);              \
 		if(new_value != wrap->native_->name) free(wrap->native_->name);    \
         wrap->native_->name = new_value;                                   \
         wrap->native_->len = new_len;                                      \
@@ -256,7 +280,7 @@ inline oid* value_to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 	static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
                                            , const v8::AccessorInfo& info) {      \
 		v8::HandleScope scope;                                                    \
-		UNWRAP(this_type, wrap, info.This());                                            \
+		UNWRAP(this_type, wrap, info.This());                                     \
 		return scope.Close(v8::String::New((const char*)wrap->native_->name       \
 		                                               , wrap->native_->len));    \
 	}
@@ -266,13 +290,40 @@ inline oid* value_to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
     static void Set_##name(v8::Local<v8::String> propertyName                     \
                   , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {   \
 		v8::HandleScope scope;                                                    \
-		UNWRAP(this_type, wrap, info.This());                                            \
+		UNWRAP(this_type, wrap, info.This());                                     \
 		v8::String::Utf8Value u8(value->ToString());                              \
 		if(0 != wrap->native_->name) free(wrap->native_->name);                   \
         wrap->native_->name = (char_type*)strdup(*u8);                            \
         wrap->native_->len = u8.length();                                         \
 	}
 
+
+#define SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)                    \
+	static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
+                                              , const v8::AccessorInfo& info) {   \
+		v8::HandleScope scope;                                                    \
+		UNWRAP(Pdu, wrap, info.This());                                           \
+		return node::Buffer::New((char*)wrap->native_->name                       \
+		              , sizeof(u_char)*wrap->native_->len)->handle_;              \
+	}
+
+#define SNMP_ACCESSOR_DEFINE_SET_USTRING(this_type, name, len)                    \
+    static void Set_##name(v8::Local<v8::String> propertyName                     \
+                   , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {  \
+		v8::HandleScope scope;                                                    \
+		UNWRAP(Pdu, wrap, info.This());                                           \
+		UNWRAP(node::Buffer, buffer, value->ToObject());                          \
+		                                                                          \
+		if(0 == wrap->native_->name                                               \
+		  || wrap->native_->len < node::Buffer::Length(buffer)) {                 \
+		    free(wrap->native_->name);                                            \
+            wrap->native_->name = (u_char*)malloc(node::Buffer::Length(buffer) + 4);  \
+		}                                                                         \
+                                                                                  \
+		memcpy(wrap->native_->name, node::Buffer::Data(buffer)                    \
+		           , node::Buffer::Length(buffer));                               \
+        wrap->native_->len = node::Buffer::Length(buffer);                        \
+	}
 
 
 #define SNMP_ACCESSOR_DEFINE(this_type, value_type,  name)                        \
@@ -286,8 +337,8 @@ inline oid* value_to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 	
 
 #define SNMP_ACCESSOR_DEFINE_USTRING(this_type, name, len)                        \
-  SNMP_ACCESSOR_DEFINE_SET_STRING(u_char, this_type, name, len)                   \
-  SNMP_ACCESSOR_DEFINE_GET_STRING(u_char, this_type, name, len)      
+  SNMP_ACCESSOR_DEFINE_SET_USTRING(this_type, name, len)                   \
+  SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)      
 
 
 #define SNMP_ACCESSOR_DEFINE_STRING(this_type, name, len)                         \
