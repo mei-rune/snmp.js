@@ -25,9 +25,6 @@
       ],
 
       'sources': [
-        'src/ae.h',
-        'src/ae.c',
-        'src/ae_binding.cpp',
         'src/binding.cpp',
         'src/session.cpp',
         'src/pdu.cpp',
@@ -73,10 +70,7 @@
       'conditions': [
         [ 'OS=="win"', {
             'sources': [
-              'src/ae_select.c',
-              'src/platform_win32.cc',
               # headers to make for a more pleasant IDE experience
-              'src/platform_win32.h',
             ],
             'defines': [
               '_GNU_SOURCE',
@@ -85,6 +79,7 @@
               'FD_SETSIZE=1024',
               # we need to use node's preferred "win32" rather than gyp's preferred "win"
               'PLATFORM="win32"',
+              'BUILDING_NODE_EXTENSION'
             ],
             'libraries': [
               'Winmm.lib',
@@ -103,8 +98,6 @@
               '-Wno-unused-parameter'
             ],
            'sources': [
-              'src/ae_kqueue.c',
-              'src/ae_epoll.c',
             ],
             'include_dirs': [ 
             ],

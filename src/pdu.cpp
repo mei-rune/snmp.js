@@ -1,3 +1,5 @@
+#ifndef __pdu__cpp__
+#define __pdu__cpp__ 1
 
 #include "snmp.h"
 
@@ -6,31 +8,31 @@ static v8::Persistent<v8::String> oid_symbol;
 static v8::Persistent<v8::String> type_symbol;
 static v8::Persistent<v8::String> value_symbol;
 
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, version);
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, command)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, reqid)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, msgid)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, transid)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, sessid)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, errstat)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, errindex)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, time)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, flags)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, securityModel)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, securityLevel)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, msgParseModel)
-SNMP_SET_READONLY_ACCESSOR(t, tDomain)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, community)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, enterprise)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, trap_type)
-//SNMP_DEFINE_ACCESSOR_SYMBOL(t, agent_addr)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, specific_type)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, contextEngineID)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, contextName)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, securityEngineID)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, securityName)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, priority)
-SNMP_DEFINE_ACCESSOR_SYMBOL(t, range_subid)
+SNMP_DEFINE_SYMBOL(version);
+SNMP_DEFINE_SYMBOL(command);
+SNMP_DEFINE_SYMBOL(reqid);
+SNMP_DEFINE_SYMBOL(msgid);
+SNMP_DEFINE_SYMBOL(transid);
+SNMP_DEFINE_SYMBOL(sessid);
+SNMP_DEFINE_SYMBOL(errstat);
+SNMP_DEFINE_SYMBOL(errindex);
+SNMP_DEFINE_SYMBOL(time);
+SNMP_DEFINE_SYMBOL(flags);
+SNMP_DEFINE_SYMBOL(securityModel);
+SNMP_DEFINE_SYMBOL(securityLevel);
+SNMP_DEFINE_SYMBOL(msgParseModel);
+SNMP_DEFINE_SYMBOL(tDomain);
+SNMP_DEFINE_SYMBOL(community);
+SNMP_DEFINE_SYMBOL(enterprise);
+SNMP_DEFINE_SYMBOL(trap_type);
+//SNMP_DEFINE_SYMBOL(agent_addr);
+SNMP_DEFINE_SYMBOL(specific_type);
+SNMP_DEFINE_SYMBOL(contextEngineID);
+SNMP_DEFINE_SYMBOL(contextName);
+SNMP_DEFINE_SYMBOL(securityEngineID);
+SNMP_DEFINE_SYMBOL(securityName);
+SNMP_DEFINE_SYMBOL(priority);
+SNMP_DEFINE_SYMBOL(range_subid);
 
 
 class Pdu : node::ObjectWrap {
@@ -55,7 +57,12 @@ public:
 		close();
 	}
 
-    static void Initialize(v8::Handle<v8::Object> target){
+
+    netsnmp_pdu* native() {
+    	return native_;
+	}
+
+    static void Initialize(v8::Handle<v8::Object> target) {
 		v8::HandleScope scope;
 
 		
@@ -226,7 +233,7 @@ public:
 	static v8::Handle<v8::Value> GetVB(const netsnmp_variable_list* vb) {
 
 		v8::Handle<v8::Object> ret = v8::Object::New();
-		ret->Set(oid_symbol, oid_to_value(vb->name, vb->name_length));
+		ret->Set(oid_symbol, from_oid(vb->name, vb->name_length));
 		ret->Set(type_symbol, v8::Int32::New(vb->type));
 
 		v8::Handle<v8::Value> exception;
@@ -242,7 +249,7 @@ public:
 			case ASN_PRIV_IMPLIED_OBJECT_ID:
 			case ASN_PRIV_INCL_RANGE:
 			case ASN_PRIV_EXCL_RANGE: {
-				ret->Set(value_symbol, oid_to_value(vb->val.objid, vb->val_len));
+				ret->Set(value_symbol, from_oid(vb->val.objid, vb->val_len));
 				break;
 			}
 			case ASN_IPADDRESS: /* snmp_build_var_op treats IPADDR like a string */
@@ -268,7 +275,7 @@ public:
 			case ASN_COUNTER64: {
 				int64_t v = 0;
 				memmove(&v, vb->val.counter64, vb->val_len);
-				ret->Set(value_symbol, to_int_value(v));
+				ret->Set(value_symbol, from_int64(v));
 				break;
 			}
 		#ifdef NETSNMP_WITH_OPAQUE_SPECIAL_TYPES
@@ -529,43 +536,30 @@ failure:
 		result->Set(msgid_symbol, from_long(pdu->msgid));
 		result->Set(transid_symbol, from_long(pdu->transid));
 		result->Set(sessid_symbol, from_long(pdu->sessid));
-		result->Set(errstat_symbol, from_long(pdu->errstat);
-		result->Set(errindex_symbol, from_long(pdu->errindex);
-		result->Set(time_symbol, from_ulong(pdu->time);
-		result->Set(flags_symbol, from_ulong(pdu->flags);
+		result->Set(errstat_symbol, from_long(pdu->errstat));
+		result->Set(errindex_symbol, from_long(pdu->errindex));
+		result->Set(time_symbol, from_ulong(pdu->time));
+		result->Set(flags_symbol, from_ulong(pdu->flags));
 
-		result->Set(securityModel_symbol, from_int32(pdu->securityModel);
-		result->Set(securityLevel_symbol, from_int32(pdu->securityLevel);
-		result->Set(msgParseModel_symbol, from_int32(pdu->msgParseModel);
+		result->Set(securityModel_symbol, from_int32(pdu->securityModel));
+		result->Set(securityLevel_symbol, from_int32(pdu->securityLevel));
+		result->Set(msgParseModel_symbol, from_int32(pdu->msgParseModel));
 
 		if(0 < pdu->community_len) {
-			result->Set(community_symbol, from_uchar(pdu->community, pdu->community_len);
+			result->Set(community_symbol, from_uchar(pdu->community, pdu->community_len));
 		}
 		if(SNMP_MSG_TRAP == pdu->command) {
 			if(0 < pdu->enterprise_length) {
-				result->Set(enterprise_symbol, from_uchar(pdu->enterprise, pdu->enterprise_length);
+				result->Set(enterprise_symbol, from_oid(pdu->enterprise, pdu->enterprise_length));
 			}
 
-		    result->Set(trap_type_symbol, from_long(pdu->trap_type);
-		    result->Set(specific_type_symbol, from_long(pdu->specific_type);
-		    result->Set(agent_addr_symbol, from_long(pdu->agent_addr);
+		    result->Set(trap_type_symbol, from_long(pdu->trap_type));
+		    result->Set(specific_type_symbol, from_long(pdu->specific_type));
+		    //result->Set(agent_addr_symbol, from_long(pdu->agent_addr));
 		}
 
-		wrap->close();
 		return v8::Undefined();
 	}
 };
 
-
-void pdu_initialize(v8::Handle<v8::Object> target) {
-	Pdu::Initialize(target);
-}
-
-
-
-	//static v8::Handle<v8::Value> Get(const v8::Arguments& args){
-	//	v8::HandleScope scope;
-	//	UNWRAP(VariableBindings, wrap, args.This());
-
-	//	return v8::Undefined();
-	//}
+#endif //__pdu__cpp__ 

@@ -22,79 +22,8 @@
  */
 
 #include "snmp.h"
-
-v8::Handle<v8::Value> newIntArray(int v1) {
-	v8::Handle<v8::Array> result = v8::Array::New(1);
-	result->Set(0, v8::Integer::New(v1));
-	return result;
-}
-
-v8::Handle<v8::Value> newIntArray(int v1, int v2) {
-	v8::Handle<v8::Array> result = v8::Array::New(2);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	return result;
-}
-
-v8::Handle<v8::Value> newIntArray(int v1, int v2, int v3) {
-	v8::Handle<v8::Array> result = v8::Array::New(3);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	return result;
-}
-
-v8::Handle<v8::Value> newIntArray(int v1, int v2, int v3, int v4) {
-	v8::Handle<v8::Array> result = v8::Array::New(4);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	result->Set(3, v8::Integer::New(v4));
-	return result;
-}
-
-v8::Handle<v8::Value> newIntArray(int v1, int v2, int v3, int v4, int v5) {
-	v8::Handle<v8::Array> result = v8::Array::New(5);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	result->Set(3, v8::Integer::New(v4));
-	result->Set(4, v8::Integer::New(v5));
-	return result;
-}
-
-v8::Handle<v8::Value> newIntArray(int v1, int v2, int v3, int v4, int v5, int v6) {
-	v8::Handle<v8::Array> result = v8::Array::New(6);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	result->Set(3, v8::Integer::New(v4));
-	result->Set(4, v8::Integer::New(v5));
-	result->Set(5, v8::Integer::New(v6));
-	return result;
-}
-
-v8::Handle<v8::Value> newIntArray(int v1, int v2, int v3, int v4, int v5, int v6, int v7) {
-	v8::Handle<v8::Array> result = v8::Array::New(7);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	result->Set(3, v8::Integer::New(v4));
-	result->Set(4, v8::Integer::New(v5));
-	result->Set(5, v8::Integer::New(v6));
-	result->Set(6, v8::Integer::New(v7));
-	return result;
-}
-
-
-
-
-#define NODE_DEFINE_CONSTANT_VALUE(target, constant_name, constant_value)                      \
-  (target)->Set(v8::String::NewSymbol(#constant_name),                                         \
-                constant_value,                                                                \
-                static_cast<v8::PropertyAttribute>(                                            \
-                    v8::ReadOnly|v8::DontDelete))
-
+#include "pdu.cpp"
+#include "session.cpp"
 
 
 static v8::Handle<v8::Value> ParseOid(const v8::Arguments& args) {
@@ -109,7 +38,7 @@ static v8::Handle<v8::Value> ParseOid(const v8::Arguments& args) {
 		return v8::Undefined();
 	}
 
-	v8::Handle<v8::Value> ret = oid_to_value(name, name_len);
+	v8::Handle<v8::Value> ret = from_oid(name, name_len);
 	if(name != name_loc) {
 		free(name);
 	}
@@ -124,6 +53,10 @@ extern "C" __declspec (dllexport)
 extern
 #endif
 void init(v8::Handle<v8::Object> target) {
+    // init net-snmp
+    netsnmp_session session;
+    snmp_sess_init(&session);
+
     v8::HandleScope scope;
 
 	
@@ -329,16 +262,38 @@ void init(v8::Handle<v8::Object> target) {
     /*
      * basic oid values 
      */
-    NODE_DEFINE_CONSTANT_VALUE(target, SNMP_OID_INTERNET,    newIntArray(1, 3, 6, 1));
-    NODE_DEFINE_CONSTANT_VALUE(target, SNMP_OID_ENTERPRISES, newIntArray(SNMP_OID_INTERNET, 4, 1));
-    NODE_DEFINE_CONSTANT_VALUE(target, SNMP_OID_MIB2,        newIntArray(SNMP_OID_INTERNET, 2, 1));
-    NODE_DEFINE_CONSTANT_VALUE(target, SNMP_OID_SNMPV2,      newIntArray(SNMP_OID_INTERNET, 6));
-    NODE_DEFINE_CONSTANT_VALUE(target, SNMP_OID_SNMPMODULES, newIntArray(SNMP_OID_SNMPV2, 3));
+    SNMP_DEFINE_CONSTANT_VALUE(target, SNMP_OID_INTERNET,    newIntArray(1, 3, 6, 1));
+    SNMP_DEFINE_CONSTANT_VALUE(target, SNMP_OID_ENTERPRISES, newIntArray(SNMP_OID_INTERNET, 4, 1));
+    SNMP_DEFINE_CONSTANT_VALUE(target, SNMP_OID_MIB2,        newIntArray(SNMP_OID_INTERNET, 2, 1));
+    SNMP_DEFINE_CONSTANT_VALUE(target, SNMP_OID_SNMPV2,      newIntArray(SNMP_OID_INTERNET, 6));
+    SNMP_DEFINE_CONSTANT_VALUE(target, SNMP_OID_SNMPMODULES, newIntArray(SNMP_OID_SNMPV2, 3));
 
     /*
      * lengths as defined by TCs 
      */
     NODE_DEFINE_CONSTANT(constants, SNMPADMINLENGTH);
+
+
+        /*
+     * This routine must be supplied by the application:
+     *
+     * int callback(operation, session, reqid, pdu, magic)
+     * int operation;
+     * netsnmp_session *session;    The session authenticated under.
+     * int reqid;                       The request id of this pdu (0 for TRAP)
+     * netsnmp_pdu *pdu;        The pdu information.
+     * void *magic                      A link to the data for this routine.
+     *
+     * Returns 1 if request was successful, 0 if it should be kept pending.
+     * Any data in the pdu must be copied because it will be freed elsewhere.
+     * Operations are defined below:
+     */
+
+    NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE);
+    NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_TIMED_OUT);
+    NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_SEND_FAILED);
+    NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_CONNECT);
+    NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_DISCONNECT);
 
 	
 
@@ -347,12 +302,13 @@ void init(v8::Handle<v8::Object> target) {
 	target->Set(v8::String::NewSymbol("parseOid"), v8::FunctionTemplate::New(ParseOid)->GetFunction());
 	
 
-    session_initialize(target);
-	pdu_initialize(target);
+    Session::Initialize(target);
+    Pdu::Initialize(target);
+
+    //session_initialize(target);
+	//pdu_initialize(target);
 
 	
-	netsnmp_session session;
-    snmp_sess_init(&session);
 }
 
 

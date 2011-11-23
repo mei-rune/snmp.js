@@ -1,41 +1,46 @@
+#ifndef __session__cpp__
+#define __session__cpp__ 1
 
 #include "snmp.h"
+#include "pdu.cpp"
+#include <memory>
 
 
+static v8::Persistent<v8::String> process_symbol;
 
-class Request {
+class Callable {
 
 private:
     v8::Persistent<v8::Object> cb_;
     v8::Persistent<v8::Object> pdu_;
-
-    Request() : native_(0){
+public:
+    Callable() {
     }
 
-    virtual ~Request() {
+    virtual ~Callable() {
     }
 
-//#define NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE	1
-//#define NETSNMP_CALLBACK_OP_TIMED_OUT		2
-//#define NETSNMP_CALLBACK_OP_SEND_FAILED		3
-//#define NETSNMP_CALLBACK_OP_CONNECT		4
-//#define NETSNMP_CALLBACK_OP_DISCONNECT		5
 
     static int OnEvent(int code, netsnmp_session *sess, int reqid,
                                           netsnmp_pdu *pdu, void *ctxt) {
-        HandleScope scope;
-        std::auto_ptr<Request> wrap(reinterpret_cast<Request*>(ctxt));
+        v8::HandleScope scope;
+        std::auto_ptr<Callable> wrap(reinterpret_cast<Callable*>(ctxt));
         assert(0 != wrap.get());
 
-		TryCatch try_catch;
+		v8::TryCatch try_catch;
+        v8::Handle<v8::Value> args[] = {
+            from_int32(code), wrap->pdu_.IsEmpty()?Pdu::fatchPdu(pdu):wrap->pdu_
+        };
 
-        if(pdu_.IsEmpty()) {
-            wrap->cb->CallAsFunction(process, 1, fatchPdu(pdu));
-		} else {
-            wrap->cb->CallAsFunction(process, 1, wrap->pdu_);
-		}
+
+        // get process from global scope.
+        v8::Local<v8::Object> global = v8::Context::GetCurrent()->Global();
+        v8::Local<v8::Object> process = global->Get(process_symbol)->ToObject();
+
+
+        wrap->cb_->CallAsFunction(process, 2, args);
 		if (try_catch.HasCaught()) {
-		   FatalException(try_catch);
+		   node::FatalException(try_catch);
 		}
     }
 
@@ -48,11 +53,12 @@ private:
 	void* session_;
 
 	Session() : session_(0){
+       snmp_sess_init(&arguments_);
 	}
 
     void open() {
 		if (NULL == session_) {
-			session_ = snmp_sess_init(&arguments_);
+			session_ = snmp_sess_open(&arguments_);
 		}
     }
 
@@ -71,6 +77,9 @@ public:
 
     static void Initialize(v8::Handle<v8::Object> target) {
 		v8::HandleScope scope;
+
+
+        process_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("process"));
 
 		v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
 		t->SetClassName(v8::String::NewSymbol("Session"));
@@ -124,19 +133,20 @@ public:
 		    return ThrowError("Must pass pdu and cb arguments to constructor.");
         }
 
-        if (!args[1]->IsCallable()) {
+        v8::Handle<v8::Object> cb = args[1]->ToObject();
+        if (!cb->IsCallable()) {
 		    return ThrowError("Must pass pdu and cb arguments to constructor.");
         }
 
-        UNWRAP(Pdu, pdu, args[0]);
-        v8::Handle<v8::Object> cb = args[1]->ToObject();
+        UNWRAP(Pdu, pdu, args[0]->ToObject());
 
+        std::auto_ptr<Callable> callable(new Callable());
 
-        if(0 != snmp_sess_async_send(wrap->session_, netsnmp_pdu *,
-                                         netsnmp_callback, void *)) {
+        if(0 != snmp_sess_async_send(wrap->session_, pdu->native(),
+                                         Callable::OnEvent, callable.get())) {
             return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));                              	
         }
-
+        callable.release();
         return v8::Undefined();
     }
 
@@ -148,6 +158,4 @@ public:
 	}
 };
 
-void session_initialize(v8::Handle<v8::Object> target) {
-	Session::Initialize(target);
-}
+#endif //   __session__cpp__
