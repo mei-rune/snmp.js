@@ -1,22 +1,71 @@
 
 #include "snmp.h"
 
+static v8::Persistent<v8::String> pdu_symbol;
 static v8::Persistent<v8::String> oid_symbol;
 static v8::Persistent<v8::String> type_symbol;
 static v8::Persistent<v8::String> value_symbol;
 
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, version);
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, command)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, reqid)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, msgid)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, transid)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, sessid)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, errstat)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, errindex)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, time)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, flags)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, securityModel)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, securityLevel)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, msgParseModel)
+SNMP_SET_READONLY_ACCESSOR(t, tDomain)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, community)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, enterprise)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, trap_type)
+//SNMP_DEFINE_ACCESSOR_SYMBOL(t, agent_addr)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, specific_type)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, contextEngineID)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, contextName)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, securityEngineID)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, securityName)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, priority)
+SNMP_DEFINE_ACCESSOR_SYMBOL(t, range_subid)
+
+
 class Pdu : node::ObjectWrap {
+
+private:
+    netsnmp_pdu* native_;
+
+	Pdu(int type) : native_(0){
+		native_ = snmp_pdu_create(type);
+	}
+
+    void close() {
+		if (NULL != native_) {
+			snmp_free_pdu(native_);
+			native_ = NULL;
+		}
+    }
+
 public:
+
+    virtual ~Pdu() {
+		close();
+	}
+
     static void Initialize(v8::Handle<v8::Object> target){
 		v8::HandleScope scope;
 
 		
+        pdu_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("Pdu"));
         oid_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("oid"));
         type_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("type"));
         value_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("value"));
 
 		v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);    
-		t->SetClassName(v8::String::NewSymbol("Pdu"));
+		t->SetClassName(pdu_symbol);
 		t->InstanceTemplate()->SetInternalFieldCount(1);
 
 		NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
@@ -48,7 +97,7 @@ public:
 		SNMP_SET_ACCESSOR(t, range_subid)
 
 
-		target->Set(v8::String::NewSymbol("Pdu"), t->GetFunction());
+		target->Set(pdu_symbol, t->GetFunction());
 		
 		target->Set(v8::String::NewSymbol("appendVariableList"),  v8::FunctionTemplate::New(Append)->GetFunction());
 		target->Set(v8::String::NewSymbol("getVariableList"),  v8::FunctionTemplate::New(Get)->GetFunction());
@@ -56,23 +105,6 @@ public:
 
 		
 	}
-
-    virtual ~Pdu() {
-		close();
-	}
-
-private:
-
-	Pdu(int type) : native_(0){
-		native_ = snmp_pdu_create(type);
-	}
-
-    void close() {
-		if (NULL != native_) {
-			snmp_free_pdu(native_);
-			native_ = NULL;
-		}
-    }
 		
     static v8::Handle<v8::Value> New(const v8::Arguments& args) {
 		v8::HandleScope scope;
@@ -489,7 +521,39 @@ failure:
 		return v8::Undefined();
 	}
 
-	netsnmp_pdu* native_;
+	static v8::Handle<v8::Value> fatchPdu(const netsnmp_pdu *pdu) {
+		v8::Handle<v8::Object> result = v8::Object::New();
+		result->Set(version_symbol, from_long(pdu->version));
+		result->Set(command_symbol, from_long(pdu->command));
+		result->Set(reqid_symbol, from_long(pdu->reqid));
+		result->Set(msgid_symbol, from_long(pdu->msgid));
+		result->Set(transid_symbol, from_long(pdu->transid));
+		result->Set(sessid_symbol, from_long(pdu->sessid));
+		result->Set(errstat_symbol, from_long(pdu->errstat);
+		result->Set(errindex_symbol, from_long(pdu->errindex);
+		result->Set(time_symbol, from_ulong(pdu->time);
+		result->Set(flags_symbol, from_ulong(pdu->flags);
+
+		result->Set(securityModel_symbol, from_int32(pdu->securityModel);
+		result->Set(securityLevel_symbol, from_int32(pdu->securityLevel);
+		result->Set(msgParseModel_symbol, from_int32(pdu->msgParseModel);
+
+		if(0 < pdu->community_len) {
+			result->Set(community_symbol, from_uchar(pdu->community, pdu->community_len);
+		}
+		if(SNMP_MSG_TRAP == pdu->command) {
+			if(0 < pdu->enterprise_length) {
+				result->Set(enterprise_symbol, from_uchar(pdu->enterprise, pdu->enterprise_length);
+			}
+
+		    result->Set(trap_type_symbol, from_long(pdu->trap_type);
+		    result->Set(specific_type_symbol, from_long(pdu->specific_type);
+		    result->Set(agent_addr_symbol, from_long(pdu->agent_addr);
+		}
+
+		wrap->close();
+		return v8::Undefined();
+	}
 };
 
 

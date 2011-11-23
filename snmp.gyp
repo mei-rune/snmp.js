@@ -25,14 +25,17 @@
       ],
 
       'sources': [
+        'src/ae.h',
+        'src/ae.c',
+        'src/ae_binding.cpp',
         'src/binding.cpp',
         'src/session.cpp',
         'src/pdu.cpp',
         'src/snmp.h',
-		'lib/index.js',
-		'lib/pdu.js',
-		'index.js',
-		'package.json',
+        'lib/index.js',
+        'lib/pdu.js',
+        'index.js',
+        'package.json',
         'common.gypi',
       ],
 
@@ -43,46 +46,46 @@
         '_LARGEFILE_SOURCE',
         '_FILE_OFFSET_BITS=64',
       ], 
-      	      'msvs_postbuild':
-                 'copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" /B "$(ProjectDir)test\node_modules\snmp.node" /B',
+      'msvs_postbuild':
+         'copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" /B "$(ProjectDir)test\node_modules\snmp.node" /B',
 
       'postbuilds':  [
-		[ 'OS=="win"', {
-			  'postbuild_name': 'copy snmp to node_modules',
-			  'action': [
-				'copy',
-				'/Y',
-				'$(ProjectDir)$(Configuration)\snmp.dll',
-				'$(ProjectDir)test\node_modules\snmp.node',
-			  ],
-			},{
-			  'postbuild_name': 'copy snmp to node_modules',
-			  'action': [
-				'cp',
-				'$(BUILT_PRODUCTS_DIR)/$(Configuration)/snmp.dll',
-				'$(BUILT_PRODUCTS_DIR)/test\node_modules/snmp.node',
-			  ],
-			}
-		]
+        [ 'OS=="win"', {
+            'postbuild_name': 'copy snmp to node_modules',
+            'action': [
+              'copy',
+              '/Y',
+              '$(ProjectDir)$(Configuration)\snmp.dll',
+              '$(ProjectDir)test\node_modules\snmp.node',
+			      ],
+	        },{
+            'postbuild_name': 'copy snmp to node_modules',
+            'action': [
+              'cp',
+              '$(BUILT_PRODUCTS_DIR)/$(Configuration)/snmp.dll',
+              '$(BUILT_PRODUCTS_DIR)/test\node_modules/snmp.node',
+            ],
+          }
+        ]
       ],
 	  
 
       'conditions': [
         [ 'OS=="win"', {
-          'sources': [
-            'src/platform_win32.cc',
-            # headers to make for a more pleasant IDE experience
-            'src/platform_win32.h',
-          ],
-          'defines': [
-            '_GNU_SOURCE',
-			'HAVE_STDINT_H',
-			'HAVE_SSIZE_T',
-            'FD_SETSIZE=1024',
-            # we need to use node's preferred "win32" rather than gyp's preferred "win"
-            'PLATFORM="win32"',
-          ],
-
+            'sources': [
+              'src/ae_select.c',
+              'src/platform_win32.cc',
+              # headers to make for a more pleasant IDE experience
+              'src/platform_win32.h',
+            ],
+            'defines': [
+              '_GNU_SOURCE',
+              'HAVE_STDINT_H',
+              'HAVE_SSIZE_T',
+              'FD_SETSIZE=1024',
+              # we need to use node's preferred "win32" rather than gyp's preferred "win"
+              'PLATFORM="win32"',
+            ],
             'libraries': [
               'Winmm.lib',
               'psapi.lib',
@@ -90,21 +93,24 @@
               'deps/node/$(Configuration)/node.lib',
               'deps/net-snmp/win32/lib/$(Configuration)/netsnmp.lib',
             ],
-        }, { # Not Windows i.e. POSIX
-          'cflags': [
-            '-g',
-            '--std=gnu89',
-            '-pedantic',
-            '-Wall',
-            '-Wextra',
-            '-Wno-unused-parameter'
-          ],
-          'sources': [
-          ],
-          'include_dirs': [ 
-          ],
-          'libraries': [ '-lm' ]
-        }],
+          }, { # Not Windows i.e. POSIX
+            'cflags': [
+              '-g',
+              '--std=gnu89',
+              '-pedantic',
+              '-Wall',
+              '-Wextra',
+              '-Wno-unused-parameter'
+            ],
+           'sources': [
+              'src/ae_kqueue.c',
+              'src/ae_epoll.c',
+            ],
+            'include_dirs': [ 
+            ],
+            'libraries': [ '-lm' ]
+          }
+        ],
       ],
     },
 
@@ -113,8 +119,7 @@
       'type': 'none',
       'dependencies': [ 'snmp' ],
       'toolsets': ['host'],
-      'variables': {
-      },
+      'variables': { },
 
       'sources': [
              'test/require.test.js',
@@ -138,13 +143,12 @@
           ],
 
           'action': [
-		     '$(ProjectDir)deps/node/$(Configuration)/node.exe',
-			 '$(ProjectDir)build/node_modules/expresso/bin/expresso',
-			 '$(FullPath)',
-           ],
+            '$(ProjectDir)deps/node/$(Configuration)/node.exe',
+            '$(ProjectDir)build/node_modules/expresso/bin/expresso',
+            '$(FullPath)',
+          ],
         },
-	  ] # actions
-
+	    ] # actions
     } # run-tests
   ] # targets
 }
