@@ -3,10 +3,10 @@
 
 #include "snmp.h"
 
-static v8::Persistent<v8::String> pdu_symbol;
-static v8::Persistent<v8::String> oid_symbol;
-static v8::Persistent<v8::String> type_symbol;
-static v8::Persistent<v8::String> value_symbol;
+SNMP_DEFINE_SYMBOL(pdu);
+SNMP_DEFINE_SYMBOL(oid);
+SNMP_DEFINE_SYMBOL(type);
+SNMP_DEFINE_SYMBOL(value);
 
 SNMP_DEFINE_SYMBOL(version);
 SNMP_DEFINE_SYMBOL(command);
@@ -66,10 +66,10 @@ public:
 		v8::HandleScope scope;
 
 		
-        pdu_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("Pdu"));
-        oid_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("oid"));
-        type_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("type"));
-        value_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("value"));
+        pdu_symbol = NODE_PSYMBOL("Pdu");
+        oid_symbol = NODE_PSYMBOL("oid");
+        type_symbol = NODE_PSYMBOL("type");
+        value_symbol = NODE_PSYMBOL("value");
 
 		v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);    
 		t->SetClassName(pdu_symbol);

@@ -6,7 +6,8 @@
 #include <memory>
 
 
-static v8::Persistent<v8::String> process_symbol;
+SNMP_DEFINE_SYMBOL(session);
+SNMP_DEFINE_SYMBOL(process);
 
 class Callable {
 
@@ -78,14 +79,15 @@ public:
 		v8::HandleScope scope;
 
 
-        process_symbol = v8::Persistent<v8::String>::New(v8::String::NewSymbol("process"));
+        process_symbol = NODE_PSYMBOL("process");
+        session_symbol = NODE_PSYMBOL("Session");
 
 		v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
-		t->SetClassName(v8::String::NewSymbol("Session"));
+		t->SetClassName(session_symbol);
 		t->InstanceTemplate()->SetInternalFieldCount(1);
 
 		NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
-		target->Set(v8::String::NewSymbol("Session"), t->GetFunction());
+		target->Set(session_symbol, t->GetFunction());
 	}
 
     static v8::Handle<v8::Value> New(const v8::Arguments& args){
