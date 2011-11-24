@@ -156,6 +156,9 @@ inline v8::Handle<v8::Value> from_string(const char* value, size_t len) {
 }
 
 inline v8::Handle<v8::Value> from_oid(const oid* name, size_t len) {
+	if(0 == name) {
+		return v8::Null();
+	}
 	v8::Handle<v8::Array> ret = v8::Array::New(len);
     for(size_t i = 0; i < len; ++ i) {
 		ret->Set(i, v8::Int32::New(name[i]));
@@ -307,14 +310,24 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 			obj->Set(name##_symbol, from_ustring(pdu->name, pdu->len));             \
 		}
 
-#define JS2C_USTRING(pdu, obj, name, len) if(obj->Has(name##_symbol)) { 		    \
-			UNWRAP(node::Buffer, buffer, obj->Get(name##_symbol)->ToObject());      \
-			if(pdu->len < node::Buffer::Length(buffer)) {                           \
+#define COPY_BYTES(char_type, pdu, name, len, data, data_len)                       \
+			if(pdu->len < data_len) {                                               \
 				if(0 != pdu->name) { free(pdu->name); }                             \
-				pdu->name = (u_char*)malloc(node::Buffer::Length(buffer));          \
+				pdu->name = (char_type*)malloc(data_len);                           \
 			}                                                                       \
-			pdu->len = node::Buffer::Length(buffer);                                \
-			memcpy(pdu->name,  node::Buffer::Data(buffer), pdu->len);              \
+			pdu->len = data_len;                                                    \
+			memcpy(pdu->name, data, pdu->len);                                      \
+
+#define JS2C_USTRING(pdu, obj, name, len) if(obj->Has(name##_symbol)) { 		    \
+			v8::Handle<v8::Value> aa_value = obj->Get(name##_symbol);               \
+		    if(node::Buffer::HasInstance(aa_value->ToObject())) {                   \
+		        UNWRAP(node::Buffer, buffer, aa_value->ToObject());                 \
+				COPY_BYTES(u_char, pdu, name, len, node::Buffer::Data(buffer)       \
+                                    , node::Buffer::Length(buffer));                \
+			} else {                                                                \
+	            v8::String::Utf8Value u8(aa_value->ToString());                     \
+				COPY_BYTES(u_char, pdu, name, len, *u8, u8.length());               \
+			}                                                                       \
 		}
 
 #define C2JS_STRING(pdu, obj, name, len) if(0 < pdu->len) {                         \
@@ -396,7 +409,7 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
 		oid* new_val = to_oid(value, wrap->native_->name, &(wrap->native_->len)); \
-		if(NULL == wrap->native_->name) {                                         \
+		if(NULL == new_val) {                                                     \
 			return; /* ThrowTypeError("argument name must be oid."); */           \
 		}                                                                         \
 	    if(new_val != wrap->native_->name) {                                      \
@@ -422,10 +435,9 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
 		v8::String::Utf8Value u8(value->ToString());                              \
-		if(0 != wrap->native_->name) free(wrap->native_->name);                   \
-        wrap->native_->name = (char_type*)strdup(*u8);                            \
-        wrap->native_->len = u8.length();                                         \
+		COPY_BYTES(char, wrap->native_, name, len, *u8, u8.length());             \
 	}
+
 
 
 #define SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)                    \
@@ -442,16 +454,16 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
                    , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {  \
 		v8::HandleScope scope;                                                    \
 		UNWRAP(Pdu, wrap, info.This());                                           \
-		UNWRAP(node::Buffer, buffer, value->ToObject());                          \
 		                                                                          \
-		if(wrap->native_->len < node::Buffer::Length(buffer)) {                   \
-		    if(0 != wrap->native_->name) { free(wrap->native_->name); }           \
-            wrap->native_->name = (u_char*)malloc(node::Buffer::Length(buffer) + 4);  \
+		if(node::Buffer::HasInstance(value->ToObject())) {                        \
+		    UNWRAP(node::Buffer, buffer, value->ToObject());                      \
+			COPY_BYTES(u_char, wrap->native_                                      \
+                     , name, len, node::Buffer::Data(buffer)                      \
+                     , node::Buffer::Length(buffer));                             \
+		} else {                                                                  \
+	        v8::String::Utf8Value u8(value->ToString());                          \
+			COPY_BYTES(u_char, wrap->native_, name, len, *u8, u8.length());       \
 		}                                                                         \
-                                                                                  \
-		memcpy(wrap->native_->name, node::Buffer::Data(buffer)                    \
-		           , node::Buffer::Length(buffer));                               \
-        wrap->native_->len = node::Buffer::Length(buffer);                        \
 	}
 
 #define SNMP_ACCESSOR_DEFINE(this_type, value_type,  name)                        \
@@ -475,12 +487,12 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 
 
 
-#define SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name, len) 
-#define SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name, len)  
+#define SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name) 
+#define SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name)  
 
-#define SNMP_ACCESSOR_DEFINE_IP4(this_type, name, len)                           \
-  SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name, len)                             \
-  SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name, len)        
+#define SNMP_ACCESSOR_DEFINE_IP4(this_type, name)                           \
+  SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name)                             \
+  SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name)        
 
 
 #endif // _snmp_js_h

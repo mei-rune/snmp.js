@@ -206,7 +206,7 @@ public:
 	SNMP_ACCESSOR_DEFINE(Pdu, long, trap_type)
 	SNMP_ACCESSOR_DEFINE(Pdu, long, specific_type)
 
-	SNMP_ACCESSOR_DEFINE_IP4(t, agent_addr)
+	SNMP_ACCESSOR_DEFINE_IP4(Pdu, agent_addr)
 	
 	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, securityEngineID, securityEngineIDLen)
 	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, contextEngineID, contextEngineIDLen)

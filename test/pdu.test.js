@@ -57,7 +57,8 @@ module.exports = {
         assert.equal(9, pdu.errindex);
 
         pdu.time = -11;
-        assert.equal(-11, pdu.time);
+        assert.notEqual(-11, pdu.time);
+        assert.equal(4294967285, pdu.time);
 
         pdu.flags = 12;
         assert.equal(12, pdu.flags);
@@ -78,6 +79,7 @@ module.exports = {
         pdu.community = 'aacc';
         assert.equal('aacc', pdu.community);
 
+        console.log("ent");
         pdu.enterprise = [2, 3, 5, 6, -1];
         assert.deepEqual([2, 3, 5, 6, -1], pdu.enterprise);
 
