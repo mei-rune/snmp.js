@@ -30,7 +30,7 @@ public:
 
 		v8::TryCatch try_catch;
         v8::Handle<v8::Value> args[] = {
-            from_int32(code), wrap->pdu_.IsEmpty()?Pdu::fatchPdu(pdu):wrap->pdu_
+            from_int32(code), wrap->pdu_.IsEmpty()?Pdu::fromPdu(pdu):wrap->pdu_
         };
 
         // get process from global scope.

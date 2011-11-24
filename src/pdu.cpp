@@ -123,12 +123,12 @@ public:
 			return ThrowTypeError("arguments type must be integer");
 		}
 
-		Pdu* pdu = new Pdu(type->ToInt32()->Value());
+		Pdu* pdu = new Pdu(type->Int32Value());
 		pdu->Wrap(args.This());
 		return args.This();
 	}
 	
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, version)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, version)
 
 	//static v8::Handle<v8::Value> Get_version(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
 	//	v8::HandleScope scope;
@@ -142,18 +142,18 @@ public:
     //  wrap->native_->version = value->Int32Value();
 	//}
 
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, command)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, reqid)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, msgid)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, transid)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, sessid)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, errstat)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, errindex)
-	SNMP_ACCESSOR_DEFINE(Pdu, Uint32, time)
-	SNMP_ACCESSOR_DEFINE(Pdu, Uint32, flags)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, securityModel)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, securityLevel)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, msgParseModel)
+	SNMP_ACCESSOR_DEFINE(Pdu, int32, command)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, reqid)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, msgid)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, transid)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, sessid)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, errstat)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, errindex)
+	SNMP_ACCESSOR_DEFINE(Pdu, ulong, time)
+	SNMP_ACCESSOR_DEFINE(Pdu, ulong, flags)
+	SNMP_ACCESSOR_DEFINE(Pdu, int32, securityModel)
+	SNMP_ACCESSOR_DEFINE(Pdu, int32, securityLevel)
+	SNMP_ACCESSOR_DEFINE(Pdu, int32, msgParseModel)
 	SNMP_ACCESSOR_DEFINE_GET_OID(Pdu, tDomain, tDomainLen)
 	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, community, community_len)
 
@@ -203,17 +203,17 @@ public:
  //       wrap->native_->enterprise_length = new_len;
 	//}
 
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, trap_type)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, specific_type)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, trap_type)
+	SNMP_ACCESSOR_DEFINE(Pdu, long, specific_type)
 
-	//	SNMP_SET_ACCESSOR(t, agent_addr)
+	SNMP_ACCESSOR_DEFINE_IP4(t, agent_addr)
 	
 	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, securityEngineID, securityEngineIDLen)
 	SNMP_ACCESSOR_DEFINE_USTRING(Pdu, contextEngineID, contextEngineIDLen)
 	SNMP_ACCESSOR_DEFINE_STRING(Pdu, contextName, contextNameLen)
 	SNMP_ACCESSOR_DEFINE_STRING(Pdu, securityName, securityNameLen)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, priority)
-	SNMP_ACCESSOR_DEFINE(Pdu, Int32, range_subid)
+	SNMP_ACCESSOR_DEFINE(Pdu, int32, priority)
+	SNMP_ACCESSOR_DEFINE(Pdu, int32, range_subid)
 
 	//static v8::Handle<v8::Value> Get_version(const v8::Arguments& args){
 	//	v8::HandleScope scope;
@@ -239,7 +239,7 @@ public:
 
 		v8::Handle<v8::Object> ret = v8::Object::New();
 		ret->Set(oid_symbol, from_oid(vb->name, vb->name_length));
-		ret->Set(type_symbol, v8::Int32::New(vb->type));
+		ret->Set(type_symbol, from_uint8(vb->type));
 
 		v8::Handle<v8::Value> exception;
 		switch (vb->type) {
@@ -247,7 +247,7 @@ public:
 			case ASN_UNSIGNED:
 			case ASN_TIMETICKS:
 			case ASN_COUNTER: {
-				ret->Set(value_symbol, v8::Uint32::New(*(vb->val.integer)));
+				ret->Set(value_symbol, from_long(*(vb->val.integer)));
 				break;
 			}
 			case ASN_OBJECT_ID:
@@ -263,7 +263,7 @@ public:
 			case ASN_BIT_STR:
 			case ASN_OPAQUE:
 			case ASN_NSAP: {
-				ret->Set(value_symbol, v8::String::New((const char*)vb->val.string, vb->val_len));
+				ret->Set(value_symbol, from_ustring(vb->val.string, vb->val_len));
 				break;
 			}
 			case SNMP_NOSUCHOBJECT:
@@ -285,12 +285,12 @@ public:
 			}
 		#ifdef NETSNMP_WITH_OPAQUE_SPECIAL_TYPES
 			case ASN_OPAQUE_FLOAT: {
-				ret->Set(value_symbol, v8::Number::New(*(vb->val.floatVal)));
+				ret->Set(value_symbol, from_float(*(vb->val.floatVal)));
 				break;
 			}
 
 			case ASN_OPAQUE_DOUBLE: {
-				ret->Set(value_symbol, v8::Number::New(*(vb->val.doubleVal)));
+				ret->Set(value_symbol, from_double(*(vb->val.doubleVal)));
 				break;
 			}
 
@@ -313,22 +313,23 @@ failure:
 		, v8::Handle<v8::Value>& value) {
 
 		oid     name_loc[MAX_OID_LEN];
-		oid*    name = name_loc;
-		size_t  name_len = sizeof(name_loc);
 
-		if(NULL == to_oid(hOid, name, &name_len)) {
-			return ThrowTypeError("argument name must be a int array.");
+		size_t  name_len = sizeof(name_loc);
+        oid*    name = to_oid(hOid, name_loc, &name_len);
+		if(NULL == name) {
+			return ThrowTypeError("argument name must be oid.");
 		}
 		
-		u_char type = (u_char)hType->Uint32Value();
+		u_char type = to_uint8(hType);
 		if('=' == type) {
 		    v8::String::Utf8Value u8(value->ToString());
 			int ret = snmp_add_var(pdu, name, name_len, type,  *u8);
 
+			if(name != name_loc) {
+				free(name);
+			}
+
 			if(0 != ret){
-				if(name != name_loc) {
-					free(name);
-				}
 				std::string err = "argument value style error - ";
 				err.append(snmp_api_errstring(ret));
 				return ThrowSyntaxError(err.c_str());
@@ -363,10 +364,9 @@ failure:
 			case ASN_PRIV_IMPLIED_OBJECT_ID:
 			case ASN_PRIV_INCL_RANGE:
 			case ASN_PRIV_EXCL_RANGE: {
-				name = vars->val.objid;
 				name_len = sizeof(vars->buf);
-
-				if(NULL == to_oid(value, name, &name_len)) {
+                name = to_oid(value, vars->val.objid, &name_len);
+				if(NULL == name) {
 					exception = v8::String::New("argument value must be a int array.");
 					goto failure;
 				}
@@ -390,10 +390,10 @@ failure:
 					goto failure;
 				}
 
-				if (vars->val_len >= sizeof(vars->buf)) {
+				if (sizeof(vars->buf) < vars->val_len) {
 					vars->val.string = (u_char *) malloc(vars->val_len + 1);
 				}
-				if (vars->val.string == NULL) {
+				if (NULL == vars->val.string) {
 					exception = v8::String::New("no storage for string.");
 					goto failure;
 				}
@@ -419,23 +419,21 @@ failure:
 			case ASN_OPAQUE_U64:
 		#endif                          /* NETSNMP_WITH_OPAQUE_SPECIAL_TYPES */
 			case ASN_COUNTER64: {
-				int64_t v = value->IntegerValue();
+				int64_t v = to_int64(value);
 				vars->val_len = sizeof(int64_t);
 				memmove(vars->val.counter64, &v, vars->val_len);
 				break;
 			}
 		#ifdef NETSNMP_WITH_OPAQUE_SPECIAL_TYPES
 			case ASN_OPAQUE_FLOAT: {
-				float v = (float)value->NumberValue();
+				(*vars->val.floatVal) = to_float(value);
 				vars->val_len = sizeof(float);
-				memmove(vars->val.floatVal, &v, vars->val_len);
 				break;
 			}
 
 			case ASN_OPAQUE_DOUBLE: {
-				double v = value->NumberValue();
+				(*vars->val.doubleVal) = to_double(value);
 				vars->val_len = sizeof(double);
-				memmove(vars->val.counter64, &v, vars->val_len);
 				break;
 			}
 
@@ -528,41 +526,87 @@ failure:
 	static v8::Handle<v8::Value> Close(const v8::Arguments& args) {
 		v8::HandleScope scope;
 		UNWRAP(Pdu, wrap, args.This());
-		
 		wrap->close();
 		return v8::Undefined();
 	}
 
-	static v8::Handle<v8::Value> fatchPdu(const netsnmp_pdu *pdu) {
+	static v8::Handle<v8::Value> fromPdu(const netsnmp_pdu *pdu) {
+
 		v8::Handle<v8::Object> result = v8::Object::New();
-		result->Set(version_symbol, from_long(pdu->version));
-		result->Set(command_symbol, from_long(pdu->command));
-		result->Set(reqid_symbol, from_long(pdu->reqid));
-		result->Set(msgid_symbol, from_long(pdu->msgid));
-		result->Set(transid_symbol, from_long(pdu->transid));
-		result->Set(sessid_symbol, from_long(pdu->sessid));
-		result->Set(errstat_symbol, from_long(pdu->errstat));
-		result->Set(errindex_symbol, from_long(pdu->errindex));
-		result->Set(time_symbol, from_ulong(pdu->time));
-		result->Set(flags_symbol, from_ulong(pdu->flags));
+		C2JS_LONG(pdu, result, version);
+		C2JS_LONG(pdu, result, command);
+		C2JS_LONG(pdu, result, reqid);
+		C2JS_LONG(pdu, result, msgid);
+		C2JS_LONG(pdu, result, transid);
+		C2JS_LONG(pdu, result, sessid);
 
-		result->Set(securityModel_symbol, from_int32(pdu->securityModel));
-		result->Set(securityLevel_symbol, from_int32(pdu->securityLevel));
-		result->Set(msgParseModel_symbol, from_int32(pdu->msgParseModel));
+		C2JS_LONG(pdu, result, errstat);
+		C2JS_LONG(pdu, result, errindex);
 
-		if(0 < pdu->community_len) {
-			result->Set(community_symbol, from_uchar(pdu->community, pdu->community_len));
-		}
+		C2JS_ULONG(pdu, result, time);
+		C2JS_ULONG(pdu, result, flags);
+
+		C2JS_INT32(pdu, result, securityModel);
+		C2JS_INT32(pdu, result, securityLevel);
+		C2JS_INT32(pdu, result, msgParseModel);
+
+		C2JS_USTRING(pdu, result, community, community_len);
+
+
 		if(SNMP_MSG_TRAP == pdu->command) {
-			if(0 < pdu->enterprise_length) {
-				result->Set(enterprise_symbol, from_oid(pdu->enterprise, pdu->enterprise_length));
-			}
 
-		    result->Set(trap_type_symbol, from_long(pdu->trap_type));
-		    result->Set(specific_type_symbol, from_long(pdu->specific_type));
-		    //result->Set(agent_addr_symbol, from_long(pdu->agent_addr));
+			C2JS_OID(pdu, result, enterprise, enterprise_length);
+
+			C2JS_LONG(pdu, result, trap_type);
+			C2JS_LONG(pdu, result, specific_type);
+			C2JS_IP4(pdu, result, agent_addr);
+		} 
+
+		if(SNMP_VERSION_3 == pdu->command) {
+
+			C2JS_USTRING(pdu, result, contextEngineID, contextEngineIDLen);
+			C2JS_STRING(pdu, result, contextName, contextNameLen);
+
+			C2JS_USTRING(pdu, result, securityEngineID, securityEngineIDLen);
+			C2JS_STRING(pdu, result, securityName, securityNameLen);
+	
 		}
+		return result;
+	}
 
+
+	static v8::Handle<v8::Value> toPdu(v8::Handle<v8::Value> v, netsnmp_pdu *pdu) {
+		v8::Handle<v8::Object> args = v->ToObject();
+		JS2C_LONG(pdu, args, version);
+		JS2C_LONG(pdu, args, command);
+		JS2C_LONG(pdu, args, reqid);
+		JS2C_LONG(pdu, args, msgid);
+		JS2C_LONG(pdu, args, transid);
+		JS2C_LONG(pdu, args, sessid);
+		JS2C_LONG(pdu, args, errstat);
+		JS2C_LONG(pdu, args, errindex);
+		JS2C_LONG(pdu, args, time);
+		JS2C_LONG(pdu, args, flags);
+
+		JS2C_INT32(pdu, args, securityModel);
+		JS2C_INT32(pdu, args, securityLevel);
+		JS2C_INT32(pdu, args, msgParseModel);
+
+		JS2C_USTRING(pdu, args, community, community_len);
+
+		if(SNMP_MSG_TRAP == pdu->command) {
+			JS2C_OID(pdu, args, enterprise, enterprise_length);
+		    JS2C_LONG(pdu, args, trap_type);
+		    JS2C_LONG(pdu, args, specific_type);
+		    JS2C_IP4(pdu, args, agent_addr);
+		} 
+
+		if(SNMP_VERSION_3 == pdu->command) {
+		    JS2C_USTRING(pdu, args, contextEngineID, contextEngineIDLen);
+		    JS2C_STRING(pdu, args, contextName, contextNameLen);
+		    JS2C_USTRING(pdu, args, securityEngineID, securityEngineIDLen);
+		    JS2C_STRING(pdu, args, securityName, securityNameLen);
+		}
 		return v8::Undefined();
 	}
 };

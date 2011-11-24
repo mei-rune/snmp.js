@@ -41,7 +41,11 @@ goto next-arg
 
 @rem Skip node build if requested.
 if not defined node goto net-snmp-build 
-cmd /c "cd deps/node && call vcbuild.bat"
+cd deps/node
+if not exist vcbuild.bat.old. copy vcbuild.bat vcbuild.bat.old
+sed -e "s/^python tools\\gyp_node -f msvs -G msvs_version=2010/cmd \/c \"python tools\\gyp_node -f msvs -G msvs_version=2010\"/" vcbuild.bat.old > vcbuild.bat
+cmd /c "call vcbuild.bat"
+cd ../..
 if errorlevel 1 goto exit
 echo node build.
 
