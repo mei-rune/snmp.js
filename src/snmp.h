@@ -38,84 +38,84 @@
 
 
 inline v8::Handle<v8::Value> newIntArray(int v1) {
-	v8::Handle<v8::Array> result = v8::Array::New(1);
-	result->Set(0, v8::Integer::New(v1));
-	return result;
+    v8::Handle<v8::Array> result = v8::Array::New(1);
+    result->Set(0, v8::Integer::New(v1));
+    return result;
 }
 
 inline v8::Handle<v8::Value> newIntArray(int v1, int v2) {
-	v8::Handle<v8::Array> result = v8::Array::New(2);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	return result;
+    v8::Handle<v8::Array> result = v8::Array::New(2);
+    result->Set(0, v8::Integer::New(v1));
+    result->Set(1, v8::Integer::New(v2));
+    return result;
 }
 
 inline v8::Handle<v8::Value> newIntArray(int v1, int v2, int v3) {
-	v8::Handle<v8::Array> result = v8::Array::New(3);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	return result;
+    v8::Handle<v8::Array> result = v8::Array::New(3);
+    result->Set(0, v8::Integer::New(v1));
+    result->Set(1, v8::Integer::New(v2));
+    result->Set(2, v8::Integer::New(v3));
+    return result;
 }
 
 inline v8::Handle<v8::Value> newIntArray(int v1, int v2
-										, int v3, int v4) {
-	v8::Handle<v8::Array> result = v8::Array::New(4);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	result->Set(3, v8::Integer::New(v4));
-	return result;
+        , int v3, int v4) {
+    v8::Handle<v8::Array> result = v8::Array::New(4);
+    result->Set(0, v8::Integer::New(v1));
+    result->Set(1, v8::Integer::New(v2));
+    result->Set(2, v8::Integer::New(v3));
+    result->Set(3, v8::Integer::New(v4));
+    return result;
 }
 
 inline v8::Handle<v8::Value> newIntArray(int v1, int v2
-								, int v3, int v4, int v5) {
-	v8::Handle<v8::Array> result = v8::Array::New(5);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	result->Set(3, v8::Integer::New(v4));
-	result->Set(4, v8::Integer::New(v5));
-	return result;
+        , int v3, int v4, int v5) {
+    v8::Handle<v8::Array> result = v8::Array::New(5);
+    result->Set(0, v8::Integer::New(v1));
+    result->Set(1, v8::Integer::New(v2));
+    result->Set(2, v8::Integer::New(v3));
+    result->Set(3, v8::Integer::New(v4));
+    result->Set(4, v8::Integer::New(v5));
+    return result;
 }
 
 inline v8::Handle<v8::Value> newIntArray(int v1, int v2
-						, int v3, int v4, int v5, int v6) {
-	v8::Handle<v8::Array> result = v8::Array::New(6);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	result->Set(3, v8::Integer::New(v4));
-	result->Set(4, v8::Integer::New(v5));
-	result->Set(5, v8::Integer::New(v6));
-	return result;
+        , int v3, int v4, int v5, int v6) {
+    v8::Handle<v8::Array> result = v8::Array::New(6);
+    result->Set(0, v8::Integer::New(v1));
+    result->Set(1, v8::Integer::New(v2));
+    result->Set(2, v8::Integer::New(v3));
+    result->Set(3, v8::Integer::New(v4));
+    result->Set(4, v8::Integer::New(v5));
+    result->Set(5, v8::Integer::New(v6));
+    return result;
 }
 
 inline v8::Handle<v8::Value> newIntArray(int v1, int v2
-				, int v3, int v4, int v5, int v6, int v7) {
-	v8::Handle<v8::Array> result = v8::Array::New(7);
-	result->Set(0, v8::Integer::New(v1));
-	result->Set(1, v8::Integer::New(v2));
-	result->Set(2, v8::Integer::New(v3));
-	result->Set(3, v8::Integer::New(v4));
-	result->Set(4, v8::Integer::New(v5));
-	result->Set(5, v8::Integer::New(v6));
-	result->Set(6, v8::Integer::New(v7));
-	return result;
+        , int v3, int v4, int v5, int v6, int v7) {
+    v8::Handle<v8::Array> result = v8::Array::New(7);
+    result->Set(0, v8::Integer::New(v1));
+    result->Set(1, v8::Integer::New(v2));
+    result->Set(2, v8::Integer::New(v3));
+    result->Set(3, v8::Integer::New(v4));
+    result->Set(4, v8::Integer::New(v5));
+    result->Set(5, v8::Integer::New(v6));
+    result->Set(6, v8::Integer::New(v7));
+    return result;
 }
 
 inline v8::Handle<v8::Value> from_float(float value) {
-	return v8::Number::New(value);
+    return v8::Number::New(value);
 }
 
 inline v8::Handle<v8::Value> from_double(double value) {
-	return v8::Number::New(value);
+    return v8::Number::New(value);
 }
 
 inline v8::Handle<v8::Value> from_uint64(uint64_t value) {
-	if(value > 0)
-		return v8::Integer::NewFromUnsigned(value);
-	return v8::Integer::New(value);
+    if(value > 0)
+        return v8::Integer::NewFromUnsigned(value);
+    return v8::Integer::New(value);
 }
 
 inline v8::Handle<v8::Value> from_int64(int64_t value) {
@@ -156,132 +156,136 @@ inline v8::Handle<v8::Value> from_string(const char* value, size_t len) {
 }
 
 inline v8::Handle<v8::Value> from_oid(const oid* name, size_t len) {
-	if(0 == name) {
-		return v8::Null();
-	}
-	v8::Handle<v8::Array> ret = v8::Array::New(len);
+    if(0 == name) {
+        return v8::Null();
+    }
+    v8::Handle<v8::Array> ret = v8::Array::New(len);
     for(size_t i = 0; i < len; ++ i) {
-		ret->Set(i, v8::Int32::New(name[i]));
-	}
-	return ret;
+        ret->Set(i, v8::Int32::New(name[i]));
+    }
+    return ret;
 }
 
 inline int8_t to_int8(v8::Handle<v8::Value>& obj, int8_t defaultValue = 0) {
-	if(!obj->IsNumber()){
-		return defaultValue;
-	}
-	return (int8_t)obj->Int32Value();
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return (int8_t)obj->Int32Value();
 }
 
 inline uint8_t to_uint8(v8::Handle<v8::Value>& obj, uint8_t defaultValue = 0) {
-	if(!obj->IsNumber()){
-		return defaultValue;
-	}
-	return (uint8_t)obj->Int32Value();
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return (uint8_t)obj->Int32Value();
 }
 
 inline int to_int32(v8::Handle<v8::Value>& obj, int defaultValue = 0) {
-	if(!obj->IsNumber()){
-		return defaultValue;
-	}
-	return obj->Int32Value();
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return obj->Int32Value();
 }
 
 inline int to_int32(v8::Handle<v8::Object>& obj, const char* key
-											, int defaultValue = 0) {
+                    , int defaultValue = 0) {
     return to_int32(obj->Get(v8::String::New(key)), defaultValue);
 }
 
 inline long to_long(v8::Handle<v8::Value>& obj, long defaultValue = 0) {
-	return to_int32(obj, defaultValue);
+    return to_int32(obj, defaultValue);
 }
 
-inline uint32_t to_uint32(v8::Handle<v8::Value>& obj, uint32_t defaultValue = 0) {    
-	if(!obj->IsNumber()){
-		return defaultValue;
-	}
-	return obj->Uint32Value();
+inline uint32_t to_uint32(v8::Handle<v8::Value>& obj, uint32_t defaultValue = 0) {
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return obj->Uint32Value();
 }
 
 inline uint32_t to_uint32(v8::Handle<v8::Object>& obj, const char* key
-										, uint32_t defaultValue = 0) {
+                          , uint32_t defaultValue = 0) {
     return to_uint32(obj->Get(v8::String::New(key)), defaultValue);
 }
 
 inline u_long to_ulong(v8::Handle<v8::Value>& obj, u_long defaultValue = 0) {
-	return to_uint32(obj, defaultValue);
+    return to_uint32(obj, defaultValue);
 }
 
 inline int64_t to_int64(v8::Handle<v8::Value>& obj, int64_t defaultValue = 0) {
-	if(!obj->IsNumber()){
-		return defaultValue;
-	}
-	return obj->IntegerValue();
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return obj->IntegerValue();
 }
 
 inline int64_t to_int64(v8::Handle<v8::Object>& obj, const char* key
-											, int64_t defaultValue = 0) {
+                        , int64_t defaultValue = 0) {
     return to_int64(obj->Get(v8::String::New(key)), defaultValue);
 }
 
 inline uint64_t to_uint64(v8::Handle<v8::Value>& obj, uint64_t defaultValue = 0) {
-	if(!obj->IsNumber()){
-		return defaultValue;
-	}
-	return obj->IntegerValue();
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return obj->IntegerValue();
 }
 
 inline uint64_t to_uint64(v8::Handle<v8::Object>& obj, const char* key
-											, uint64_t defaultValue = 0) {
+                          , uint64_t defaultValue = 0) {
     return to_uint64(obj->Get(v8::String::New(key)), defaultValue);
 }
 
 inline float to_float(v8::Handle<v8::Value>& obj, float defaultValue = 0) {
-	if(!obj->IsNumber()){
-		return defaultValue;
-	}
-	return obj->NumberValue();
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return obj->NumberValue();
 }
 
 inline double to_double(v8::Handle<v8::Value>& obj, double defaultValue = 0) {
-	if(!obj->IsNumber()){
-		return defaultValue;
-	}
-	return obj->NumberValue();
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return obj->NumberValue();
 }
 
 inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
-	if(s->IsString()){
-		v8::String::Utf8Value u8(s->ToString());
-		oid* buf = out;
-		while(NULL == snmp_parse_oid(*u8, buf, len)){
-		    if(buf != out) {
-		       free(buf);
-		    }
+    if(s->IsString()) {
+        v8::String::Utf8Value u8(s->ToString());
+        oid* buf = out;
+        if(0 == (*len)) {
+            buf = (oid*)malloc(sizeof(oid) * MAX_OID_LEN);
+            *len = MAX_OID_LEN;
+        }
+        while(NULL == snmp_parse_oid(*u8, buf, len)) {
+            if(buf != out) {
+                free(buf);
+            }
 
-			if((*len) > MAX_OID_LEN) {
-				return 0;
-			}
+            if((*len) > MAX_OID_LEN) {
+                return 0;
+            }
 
-			(*len) *= 2;
-			buf = (oid*)malloc(sizeof(oid) * *len);
-		}
-		return buf;
-	} else if(s->IsArray()) {
-		v8::Handle<v8::Array> ints = v8::Handle<v8::Array>::Cast(s);
-		if(ints->Length() > *len) {
-			out = (oid*)malloc(sizeof(oid) * ints->Length() + 1);
-		}
-		
-		(*len) = ints->Length();
+            (*len) *= 2;
+            buf = (oid*)malloc(sizeof(oid) * *len);
+        }
+        return buf;
+    } else if(s->IsArray()) {
+        v8::Handle<v8::Array> ints = v8::Handle<v8::Array>::Cast(s);
+        if(ints->Length() > *len) {
+            out = (oid*)malloc(sizeof(oid) * ints->Length() + 1);
+        }
 
-		for(int i =0; i < (*len); ++ i) {
-			out[i] = ints->Get(i)->Int32Value();
-		}
-		return out;
-	} else {
-		return 0;
-	}
+        (*len) = ints->Length();
+
+        for(int i =0; i < (*len); ++ i) {
+            out[i] = ints->Get(i)->Int32Value();
+        }
+        return out;
+    } else {
+        return 0;
+    }
 }
 
 #define UNWRAP(type, wrap, ref) type* wrap = ObjectWrap::Unwrap<type>(ref)
@@ -317,7 +321,7 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 			}                                                                       \
 			pdu->len = data_len;                                                    \
 			memcpy(pdu->name, data, pdu->len);                                      \
-
+ 
 #define JS2C_USTRING(pdu, obj, name, len) if(obj->Has(name##_symbol)) { 		    \
 			v8::Handle<v8::Value> aa_value = obj->Get(name##_symbol);               \
 		    if(node::Buffer::HasInstance(aa_value->ToObject())) {                   \
@@ -360,7 +364,7 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 		}
 
 
-#define C2JS_IP4(pdu, obj, name) 
+#define C2JS_IP4(pdu, obj, name)
 
 #define JS2C_IP4(pdu, obj, name)
 
@@ -468,31 +472,31 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 
 #define SNMP_ACCESSOR_DEFINE(this_type, value_type,  name)                        \
   SNMP_ACCESSOR_DEFINE_SET(this_type, value_type,  name)                          \
-  SNMP_ACCESSOR_DEFINE_GET(this_type, value_type,  name)      
+  SNMP_ACCESSOR_DEFINE_GET(this_type, value_type,  name)
 
 
 #define SNMP_ACCESSOR_DEFINE_OID(this_type, name, len)                            \
   SNMP_ACCESSOR_DEFINE_SET_OID(this_type, name, len)                              \
-  SNMP_ACCESSOR_DEFINE_GET_OID(this_type, name, len)      
-	
+  SNMP_ACCESSOR_DEFINE_GET_OID(this_type, name, len)
+
 
 #define SNMP_ACCESSOR_DEFINE_USTRING(this_type, name, len)                        \
   SNMP_ACCESSOR_DEFINE_SET_USTRING(this_type, name, len)                          \
-  SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)      
+  SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)
 
 
 #define SNMP_ACCESSOR_DEFINE_STRING(this_type, name, len)                         \
   SNMP_ACCESSOR_DEFINE_SET_STRING(char, this_type, name, len)                     \
-  SNMP_ACCESSOR_DEFINE_GET_STRING(char, this_type, name, len)        
+  SNMP_ACCESSOR_DEFINE_GET_STRING(char, this_type, name, len)
 
 
 
-#define SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name) 
-#define SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name)  
+#define SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name)
+#define SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name)
 
 #define SNMP_ACCESSOR_DEFINE_IP4(this_type, name)                           \
   SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name)                             \
-  SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name)        
+  SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name)
 
 
 #endif // _snmp_js_h

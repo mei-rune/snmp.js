@@ -36,3 +36,7 @@ ipch/
 lib/snmp.node
 
 test/node_modules
+
+format_code.bat
+
+*.orig

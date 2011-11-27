@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <root name="D:/Developing/nodejs/snmp.js"/>
+    <includedir>
+        <dir name="D:/Developing/nodejs/snmp.js/deps/node/src"/>
+        <dir name="D:/Developing/nodejs/snmp.js/deps/node/deps/v8/include"/>
+        <dir name="D:/Developing/nodejs/snmp.js/deps/node/deps/uv/include"/>
+        <dir name="D:/Developing/nodejs/snmp.js/deps/net-snmp/include"/>
+        <dir name="D:/Developing/nodejs/snmp.js/deps/net-snmp/win32"/>
+        <dir name="D:/Developing/nodejs/snmp.js/src"/>
+    </includedir>
+    <defines>
+        <define name="_GNU_SOURCE HAVE_STDINT_H HAVE_SSIZE_T FD_SETSIZE=1024 PLATFORM=&quot;win32&quot; BUILDING_NODE_EXTENSION"/>
+    </defines>
+    <paths>
+        <dir name="D:/Developing/nodejs/snmp.js/src"/>
+    </paths>
+</project>

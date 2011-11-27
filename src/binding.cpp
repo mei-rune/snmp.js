@@ -27,27 +27,27 @@
 
 
 static v8::Handle<v8::Value> ParseOid(const v8::Arguments& args) {
-		v8::HandleScope scope;
-		
-	oid name_loc[MAX_OID_LEN];
-	oid* name = name_loc;
-	size_t name_len = sizeof(name_loc);
+    v8::HandleScope scope;
 
-	name = to_oid(args[0], name, &name_len);
-	if(0 == name) {
-		return v8::Undefined();
-	}
+    oid name_loc[MAX_OID_LEN];
+    oid* name = name_loc;
+    size_t name_len = sizeof(name_loc);
 
-	v8::Handle<v8::Value> ret = from_oid(name, name_len);
-	if(name != name_loc) {
-		free(name);
-	}
-	return scope.Close(ret);
+    name = to_oid(args[0], name, &name_len);
+    if(0 == name) {
+        return v8::Undefined();
+    }
+
+    v8::Handle<v8::Value> ret = from_oid(name, name_len);
+    if(name != name_loc) {
+        free(name);
+    }
+    return scope.Close(ret);
 }
 
 
 // --- Entry point ---
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
 extern "C" __declspec (dllexport)
 #else
 extern
@@ -59,8 +59,8 @@ void init(v8::Handle<v8::Object> target) {
 
     v8::HandleScope scope;
 
-	
-	v8::Local<v8::Object> constants = v8::Object::New();    
+
+    v8::Local<v8::Object> constants = v8::Object::New();
 
     NODE_DEFINE_CONSTANT(constants, ASN_BOOLEAN);
     NODE_DEFINE_CONSTANT(constants, ASN_INTEGER);
@@ -75,21 +75,21 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, ASN_APPLICATION);
     NODE_DEFINE_CONSTANT(constants, ASN_CONTEXT);
     NODE_DEFINE_CONSTANT(constants, ASN_PRIVATE);
-		
+
     NODE_DEFINE_CONSTANT(constants, ASN_PRIMITIVE);
     NODE_DEFINE_CONSTANT(constants, ASN_CONSTRUCTOR);
-	
+
     NODE_DEFINE_CONSTANT(constants, ASN_LONG_LEN);
     NODE_DEFINE_CONSTANT(constants, ASN_EXTENSION_ID);
     NODE_DEFINE_CONSTANT(constants, ASN_BIT8);
 
 
-	
+
     NODE_DEFINE_CONSTANT(constants, SNMP_PORT);
     NODE_DEFINE_CONSTANT(constants, SNMP_TRAP_PORT);
-	
+
     /*
-     * versions based on version field 
+     * versions based on version field
      */
 #ifndef NETSNMP_DISABLE_SNMPV1
     NODE_DEFINE_CONSTANT(constants, SNMP_VERSION_1);
@@ -99,18 +99,18 @@ void init(v8::Handle<v8::Object> target) {
 #endif
     NODE_DEFINE_CONSTANT(constants, SNMP_VERSION_2u);
     NODE_DEFINE_CONSTANT(constants, SNMP_VERSION_3);
-	
+
     /*
-     * versions not based on a version field 
+     * versions not based on a version field
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_VERSION_sec);
     NODE_DEFINE_CONSTANT(constants, SNMP_VERSION_2p);
     NODE_DEFINE_CONSTANT(constants, SNMP_VERSION_2star);
 
 
-	
+
     /*
-     * PDU types in SNMPv1, SNMPsec, SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 
+     * PDU types in SNMPv1, SNMPsec, SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_GET);
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_GETNEXT);
@@ -118,38 +118,38 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_SET);
 
     /*
-     * PDU types in SNMPv1 and SNMPsec 
+     * PDU types in SNMPv1 and SNMPsec
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_TRAP);
 
     /*
-     * PDU types in SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 
+     * PDU types in SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_GETBULK);
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_INFORM);
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_TRAP2);
 
-	
+
     /*
-     * PDU types in SNMPv2u, SNMPv2*, and SNMPv3 
+     * PDU types in SNMPv2u, SNMPv2*, and SNMPv3
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_REPORT);
 
 
-	
+
     /*
-     * Exception values for SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 
+     * Exception values for SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_NOSUCHOBJECT);
     NODE_DEFINE_CONSTANT(constants, SNMP_NOSUCHINSTANCE);
     NODE_DEFINE_CONSTANT(constants, SNMP_ENDOFMIBVIEW);
-	
+
     /*
-     * Error codes (the value of the field error-status in PDUs) 
+     * Error codes (the value of the field error-status in PDUs)
      */
 
     /*
-     * in SNMPv1, SNMPsec, SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 PDUs 
+     * in SNMPv1, SNMPsec, SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 PDUs
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_NOERROR);
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_TOOBIG);
@@ -157,9 +157,9 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_BADVALUE);
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_READONLY);
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_GENERR);
-	
+
     /*
-     * in SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 PDUs 
+     * in SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 PDUs
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_NOACCESS);
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_WRONGTYPE);
@@ -173,18 +173,18 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_UNDOFAILED);
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_AUTHORIZATIONERROR);
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_NOTWRITABLE);
-	
+
     /*
-     * in SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 PDUs 
-     */	
+     * in SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3 PDUs
+     */
     NODE_DEFINE_CONSTANT(constants, SNMP_ERR_INCONSISTENTNAME);
 
 
 
 
-	
+
     /*
-     * values of the generic-trap field in trap PDUs 
+     * values of the generic-trap field in trap PDUs
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_TRAP_COLDSTART);
     NODE_DEFINE_CONSTANT(constants, SNMP_TRAP_WARMSTART);
@@ -195,7 +195,7 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, SNMP_TRAP_ENTERPRISESPECIFIC);
 
     /*
-     * row status values 
+     * row status values
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_ROW_NONEXISTENT);
     NODE_DEFINE_CONSTANT(constants, SNMP_ROW_ACTIVE);
@@ -206,7 +206,7 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, SNMP_ROW_DESTROY);
 
     /*
-     * row storage values 
+     * row storage values
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_STORAGE_NONE);
     NODE_DEFINE_CONSTANT(constants, SNMP_STORAGE_OTHER);
@@ -216,7 +216,7 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, SNMP_STORAGE_READONLY);
 
     /*
-     * message processing models 
+     * message processing models
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_MP_MODEL_SNMPv1);
     NODE_DEFINE_CONSTANT(constants, SNMP_MP_MODEL_SNMPv2c);
@@ -225,7 +225,7 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, SNMP_MP_MODEL_SNMPv2p);
 
     /*
-     * security values 
+     * security values
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_SEC_MODEL_ANY);
     NODE_DEFINE_CONSTANT(constants, SNMP_SEC_MODEL_SNMPv1);
@@ -243,7 +243,7 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, SNMP_MSG_FLAG_RPRT_BIT);
 
     /*
-     * control PDU handling characteristics 
+     * control PDU handling characteristics
      */
     NODE_DEFINE_CONSTANT(constants, UCD_MSG_FLAG_RESPONSE_PDU );
     NODE_DEFINE_CONSTANT(constants, UCD_MSG_FLAG_EXPECT_RESPONSE);
@@ -254,13 +254,13 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, UCD_MSG_FLAG_TUNNELED);
 
     /*
-     * view status 
+     * view status
      */
     NODE_DEFINE_CONSTANT(constants, SNMP_VIEW_INCLUDED);
     NODE_DEFINE_CONSTANT(constants, SNMP_VIEW_EXCLUDED);
 
     /*
-     * basic oid values 
+     * basic oid values
      */
     SNMP_DEFINE_CONSTANT_VALUE(target, SNMP_OID_INTERNET,    newIntArray(1, 3, 6, 1));
     SNMP_DEFINE_CONSTANT_VALUE(target, SNMP_OID_ENTERPRISES, newIntArray(SNMP_OID_INTERNET, 4, 1));
@@ -269,25 +269,25 @@ void init(v8::Handle<v8::Object> target) {
     SNMP_DEFINE_CONSTANT_VALUE(target, SNMP_OID_SNMPMODULES, newIntArray(SNMP_OID_SNMPV2, 3));
 
     /*
-     * lengths as defined by TCs 
+     * lengths as defined by TCs
      */
     NODE_DEFINE_CONSTANT(constants, SNMPADMINLENGTH);
 
 
-        /*
-     * This routine must be supplied by the application:
-     *
-     * int callback(operation, session, reqid, pdu, magic)
-     * int operation;
-     * netsnmp_session *session;    The session authenticated under.
-     * int reqid;                       The request id of this pdu (0 for TRAP)
-     * netsnmp_pdu *pdu;        The pdu information.
-     * void *magic                      A link to the data for this routine.
-     *
-     * Returns 1 if request was successful, 0 if it should be kept pending.
-     * Any data in the pdu must be copied because it will be freed elsewhere.
-     * Operations are defined below:
-     */
+    /*
+    * This routine must be supplied by the application:
+    *
+    * int callback(operation, session, reqid, pdu, magic)
+    * int operation;
+    * netsnmp_session *session;    The session authenticated under.
+    * int reqid;                       The request id of this pdu (0 for TRAP)
+    * netsnmp_pdu *pdu;        The pdu information.
+    * void *magic                      A link to the data for this routine.
+    *
+    * Returns 1 if request was successful, 0 if it should be kept pending.
+    * Any data in the pdu must be copied because it will be freed elsewhere.
+    * Operations are defined below:
+    */
 
     NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE);
     NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_TIMED_OUT);
@@ -295,20 +295,20 @@ void init(v8::Handle<v8::Object> target) {
     NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_CONNECT);
     NODE_DEFINE_CONSTANT(constants, NETSNMP_CALLBACK_OP_DISCONNECT);
 
-	
 
-	target->Set(v8::String::NewSymbol("Constants"), constants);
-	
-	target->Set(v8::String::NewSymbol("parseOid"), v8::FunctionTemplate::New(ParseOid)->GetFunction());
-	
+
+    target->Set(v8::String::NewSymbol("Constants"), constants);
+
+    target->Set(v8::String::NewSymbol("parseOid"), v8::FunctionTemplate::New(ParseOid)->GetFunction());
+
 
     Session::Initialize(target);
     Pdu::Initialize(target);
 
     //session_initialize(target);
-	//pdu_initialize(target);
+    //pdu_initialize(target);
 
-	
+
 }
 
 
@@ -316,15 +316,13 @@ void init(v8::Handle<v8::Object> target) {
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
-					 )
-{
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
-	}
-	return TRUE;
+                     ) {
+    switch (ul_reason_for_call) {
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }

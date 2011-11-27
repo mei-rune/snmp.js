@@ -1,3 +1,74 @@
+
+var assertBuffer = function(assert, actual, expected) {
+          assert.ok(Buffer.isBuffer(actual), "This isn`t a Buffer.");
+          if(!Buffer.isBuffer(expected)) {
+                assert.equal(actual.toString(), expected);
+          } else {
+                assert.deepEqual(actual, expected);
+          }
+        };
+
+var fillPdu = function(pdu) {
+
+        pdu.command = "get";
+        pdu.reqid = 4;
+        pdu.msgid = 5;
+        pdu.transid = 6;
+        pdu.sessid = 7;
+        pdu.errstat = 8;
+        pdu.errindex = 9;
+        pdu.time = 4294967285;
+        pdu.flags = 12;
+        pdu.securityModel = 13;
+        pdu.securityLevel = 14;
+        pdu.msgParseModel = 15;
+        pdu.community = 'aacc';
+        pdu.enterprise = [2, 3, 5, 6, -1];
+        pdu.trap_type = 16;
+        pdu.specific_type = 17;
+        pdu.contextEngineID = 'contextEngineID';
+        pdu.contextName = 'contextName';
+        pdu.securityEngineID = 'securityEngineID';
+        pdu.securityName = 'securityName';
+        pdu.priority = 18;
+        pdu.range_subid = 19;
+}
+
+var assertPdu = function(assert, snmp, actual, expected) {
+        assert.ok(actual !== null, "result is null");
+        assert.equal(actual.version, expected.version);
+        assert.equal(actual.command, expected.command);
+        assert.equal(actual.reqid, expected.reqid);
+        assert.equal(actual.msgid, expected.msgid);
+        assert.equal(actual.transid, expected.transid);
+        assert.equal(actual.sessid, expected.sessid);
+        assert.equal(actual.errstat, expected.errstat);
+        assert.equal(actual.errindex, expected.errindex);
+        assert.equal(actual.time, expected.time);
+        assert.equal(actual.flags, expected.flags);
+        assert.equal(actual.securityModel, expected.securityModel);
+        assert.equal(actual.securityLevel, expected.securityLevel);
+        assert.equal(actual.msgParseModel, expected.msgParseModel);
+
+        if(snmp.PDUTYPE.TRAP === expected.command) {
+                assert.deepEqual(actual.enterprise, expected.enterprise);
+                assert.equal(actual.trap_type, expected.trap_type);
+                assert.equal(actual.specific_type, expected.specific_type);
+        }
+
+
+        if(snmp.SNMP_VERSION.v3 === expected.version) {
+                assertBuffer(assert, actual.contextEngineID, expected.contextEngineID);
+                assert.equal(actual.contextName, expected.contextName);
+                assertBuffer(assert, actual.securityEngineID,  expected.securityEngineID);
+                assert.equal(actual.securityName, expected.securityName);
+                assert.equal(actual.priority, expected.priority);
+                assert.equal(actual.range_subid, expected.range_subid);
+        } else {
+                assertBuffer(assert, actual.community, expected.community);
+        }
+}
+
 module.exports = {
     'require pdu': function (beforeExit, assert) {
         var snmp = require('snmp');
@@ -29,6 +100,8 @@ module.exports = {
 
     },
     'new pdu with get argument': function (beforeExit, assert) {
+        
+
         var snmp = require('snmp');
         var pdu = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
         pdu.version = -11;
@@ -77,9 +150,8 @@ module.exports = {
 
 
         pdu.community = 'aacc';
-        assert.equal('aacc', pdu.community);
+        assertBuffer(assert, pdu.community, 'aacc');
 
-        console.log("ent");
         pdu.enterprise = [2, 3, 5, 6, -1];
         assert.deepEqual([2, 3, 5, 6, -1], pdu.enterprise);
 
@@ -93,13 +165,13 @@ module.exports = {
         //	SNMP_SET_ACCESSOR(t, agent_addr)
 
         pdu.contextEngineID = 'contextEngineID';
-        assert.equal('contextEngineID', pdu.contextEngineID);
+        assertBuffer(assert, pdu.contextEngineID, 'contextEngineID');
 
         pdu.contextName = 'contextName';
         assert.equal('contextName', pdu.contextName);
 
         pdu.securityEngineID = 'securityEngineID';
-        assert.equal('securityEngineID', pdu.securityEngineID);
+        assertBuffer(assert, pdu.securityEngineID, 'securityEngineID');
 
         pdu.securityName = 'securityName';
         assert.equal('securityName', pdu.securityName);
@@ -113,12 +185,103 @@ module.exports = {
         pdu.close();
     },
 
+    'create v1 pdu with js object': function (beforeExit, assert) {
+
+        var snmp = require('snmp');
+        var pdu = { version : snmp.SNMP_VERSION.v1 };
+        var newvalue;
+        fillPdu(pdu);
+        newvalue = snmp.createPduFromObject(pdu);
+        assertPdu(assert, snmp, newvalue, pdu);
+        newvalue.community = "aaa";
+        newvalue.close();
+    },
+
+    'create v3 pdu with js object': function (beforeExit, assert) {
+
+        var snmp = require('snmp');
+        var pdu = { version : snmp.SNMP_VERSION.v3 };
+        var newvalue;
+        fillPdu(pdu);
+        newvalue = snmp.createPduFromObject(pdu);
+        assertPdu(assert, snmp, newvalue, pdu);
+        newvalue.securityName = "aaa";
+        newvalue.close();
+    },
+
+    'create v1 jsPdu with pdu': function (beforeExit, assert) {
+
+        var snmp = require('snmp');
+
+        var pdu, newvalue;
+
+        pdu  = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
+        pdu.version = snmp.SNMP_VERSION.v1;
+        
+        fillPdu(pdu);
+        
+        newvalue = pdu.toJS();
+        
+        assertPdu(assert, snmp, pdu, newvalue);
+
+        pdu.close();
+    },
+
+    'create v3 jsPdu with pdu': function (beforeExit, assert) {
+
+        var snmp = require('snmp');
+
+        var pdu, newvalue;
+
+        pdu  = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
+        pdu.version = snmp.SNMP_VERSION.v3;
+        
+        fillPdu(pdu);
+        
+        newvalue = pdu.toJS();
+        
+        assertPdu(assert, snmp, pdu, newvalue);
+
+        pdu.close();
+    },
+
+    'create pdu with error oid js': function (beforeExit, assert) {
+
+        var snmp = require('snmp');
+
+        var snmp = require('snmp');
+        var pdu = { version : snmp.SNMP_VERSION.v3 };
+        var newvalue;
+        fillPdu(pdu);
+        pdu.command = "trap";
+
+
+        pdu.enterprise = "sfasfasf";
+        console.log("aaa");
+        try {
+                newvalue = snmp.createPduFromObject(pdu);
+                newvalue.close();
+                assert.ok(false, "expected a TypeError.");
+        }catch(e) {
+                assert.equal(e.message, "argument enterprise must be oid.");
+        }
+
+
+    },
+
+
+
+
+
     'create pdu with vb': function (beforeExit, assert) {
         var snmp = require('snmp');
-        var pdu = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
-        var vb = pdu.variableBindings;
+        var pdu, vb, a;
+        pdu = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
+        vb = pdu.variableBindings;
         vb.add([1,2,3,4,5], snmp.DATA_TYPE.ASN_INTEGER, 23);
-        assert.equal(vb.get([1,2,3,4,5]).value, 23);
+        a = vb.get([1,2,3,4,5]);
+        assert.notEqual(a, null);
+        assert.equal(a.value, 23);
         vb.clear();
         vb.add([1,2,3,4,5], snmp.DATA_TYPE.ASN_INTEGER, "24");
         assert.equal(vb.get([1,2,3,4,5]).value, 24);
