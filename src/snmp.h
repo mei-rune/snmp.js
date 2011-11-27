@@ -444,6 +444,27 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 
 
 
+
+#define SNMP_ACCESSOR_DEFINE_GET_STRING_LENLESS(this_type, name)                  \
+    static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
+                                           , const v8::AccessorInfo& info) {      \
+        v8::HandleScope scope;                                                    \
+        UNWRAP(this_type, wrap, info.This());                                     \
+        return scope.Close(from_string(wrap->native_->name                        \
+                                              , strlen(wrap->native_->name)));    \
+    }
+
+
+#define SNMP_ACCESSOR_DEFINE_SET_STRING_LENLESS(this_type, name)                  \
+    static void Set_##name(v8::Local<v8::String> propertyName                     \
+                  , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {   \
+        v8::HandleScope scope;                                                    \
+        UNWRAP(this_type, wrap, info.This());                                     \
+        v8::String::Utf8Value u8(value->ToString());                              \
+        wrap->native_->name = strndup(*u8, u8.length());                          \
+    }
+
+
 #define SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)                    \
 	static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
                                               , const v8::AccessorInfo& info) {   \
@@ -470,6 +491,28 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 		}                                                                         \
 	}
 
+
+#define SNMP_ACCESSOR_DEFINE_SET_FIXED_USTRING(this_type, name, len, fixed)       \
+    static void Set_##name(v8::Local<v8::String> propertyName                     \
+                   , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {  \
+        v8::HandleScope scope;                                                    \
+        UNWRAP(Pdu, wrap, info.This());                                           \
+                                                                                  \
+        if(node::Buffer::HasInstance(value->ToObject())) {                        \
+            UNWRAP(node::Buffer, buffer, value->ToObject());                      \
+            if(fixed < node::Buffer::Length(buffer)) {                            \
+                return ThrowError("Argument '" #name "' too length, exceed limit '" #fixed "'");   \
+            }                                                                     \
+            memcpy(wrap->native_->name, node::Buffer::Data(buffer)                \
+                                      , node::Buffer::Length(buffer));            \
+            wrap->native_->len = node::Buffer::Length(buffer);                    \
+        } else {                                                                  \
+            v8::String::Utf8Value u8(value->ToString());                          \
+            memcpy(wrap->native_->name, *u8, u8.length());                        \
+            wrap->native_->len = u8.length();                                     \            
+        }                                                                         \
+    }
+
 #define SNMP_ACCESSOR_DEFINE(this_type, value_type,  name)                        \
   SNMP_ACCESSOR_DEFINE_SET(this_type, value_type,  name)                          \
   SNMP_ACCESSOR_DEFINE_GET(this_type, value_type,  name)
@@ -488,6 +531,17 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 #define SNMP_ACCESSOR_DEFINE_STRING(this_type, name, len)                         \
   SNMP_ACCESSOR_DEFINE_SET_STRING(char, this_type, name, len)                     \
   SNMP_ACCESSOR_DEFINE_GET_STRING(char, this_type, name, len)
+
+
+#define SNMP_ACCESSOR_DEFINE_STRING_LENLESS(this_type, name)                      \
+  SNMP_ACCESSOR_DEFINE_SET_STRING_LENLESS(this_type, name)                        \
+  SNMP_ACCESSOR_DEFINE_GET_STRING_LENLESS(this_type, name)
+
+
+
+#define SNMP_ACCESSOR_DEFINE_FIXED_USTRING(this_type, name, len, fixed)           \
+  SNMP_ACCESSOR_DEFINE_SET_FIXED_USTRING(this_type, name, len, fixed)             \
+  SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)
 
 
 
