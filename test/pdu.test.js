@@ -1,4 +1,6 @@
 
+var util = require('util');
+
 var assertBuffer = function(assert, actual, expected) {
           assert.ok(Buffer.isBuffer(actual), "This isn`t a Buffer.");
           if(!Buffer.isBuffer(expected)) {
@@ -8,7 +10,7 @@ var assertBuffer = function(assert, actual, expected) {
           }
         };
 
-var fillPdu = function(pdu) {
+var fillPdu = function(snmp, pdu) {
 
         pdu.command = "get";
         pdu.reqid = 4;
@@ -32,9 +34,24 @@ var fillPdu = function(pdu) {
         pdu.securityName = 'securityName';
         pdu.priority = 18;
         pdu.range_subid = 19;
+
+        if(pdu.variableBindings) {
+                pdu.variableBindings.add([1,2,3,4,6], snmp.DATA_TYPE.ASN_INTEGER, 12);
+                pdu.variableBindings.add([1,2,4,4,6], snmp.DATA_TYPE.ASN_INTEGER, 12);
+                pdu.variableBindings.add([1,2,5,4,6], snmp.DATA_TYPE.ASN_INTEGER, 'asdfasf');
+                
+        } else {
+                pdu.variableBindings = [
+                        {oid:[1,2,3,4,6], type:snmp.DATA_TYPE.ASN_INTEGER, value:12},
+                        {oid:[1,2,4,4,6], type:snmp.DATA_TYPE.ASN_INTEGER, value:12},
+                        {oid:[1,2,5,4,6], type:snmp.DATA_TYPE.ASN_OCTET_STR, value:"asdfasf"},
+                ];
+        }
 }
 
 var assertPdu = function(assert, snmp, actual, expected) {
+        var i;
+
         assert.ok(actual !== null, "result is null");
         assert.equal(actual.version, expected.version);
         assert.equal(actual.command, expected.command);
@@ -66,6 +83,16 @@ var assertPdu = function(assert, snmp, actual, expected) {
                 assert.equal(actual.range_subid, expected.range_subid);
         } else {
                 assertBuffer(assert, actual.community, expected.community);
+        }
+
+
+        for(i =0; i < 3; ++ i) {
+                var a = util.isArray(actual.variableBindings)? actual.variableBindings[i]:actual.variableBindings.get(i);
+                var b = util.isArray(expected.variableBindings)? expected.variableBindings[i]:expected.variableBindings.get(i);
+                assert.deepEqual(a.oid, b.oid);
+                assert.deepEqual(a.type, b.type);
+                if(i === 3) { assertBuffer(a.value, b.value); }
+                else { assert.equal(a.value, b.value); }
         }
 }
 
@@ -190,7 +217,7 @@ module.exports = {
         var snmp = require('snmp');
         var pdu = { version : snmp.SNMP_VERSION.v1 };
         var newvalue;
-        fillPdu(pdu);
+        fillPdu(snmp, pdu);
         newvalue = snmp.createPduFromObject(pdu);
         assertPdu(assert, snmp, newvalue, pdu);
         newvalue.community = "aaa";
@@ -202,7 +229,7 @@ module.exports = {
         var snmp = require('snmp');
         var pdu = { version : snmp.SNMP_VERSION.v3 };
         var newvalue;
-        fillPdu(pdu);
+        fillPdu(snmp, pdu);
         newvalue = snmp.createPduFromObject(pdu);
         assertPdu(assert, snmp, newvalue, pdu);
         newvalue.securityName = "aaa";
@@ -218,7 +245,7 @@ module.exports = {
         pdu  = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
         pdu.version = snmp.SNMP_VERSION.v1;
         
-        fillPdu(pdu);
+        fillPdu(snmp, pdu);
         
         newvalue = pdu.toJS();
         
@@ -236,7 +263,7 @@ module.exports = {
         pdu  = snmp.createPdu(snmp.Constants.SNMP_MSG_GET);
         pdu.version = snmp.SNMP_VERSION.v3;
         
-        fillPdu(pdu);
+        fillPdu(snmp, pdu);
         
         newvalue = pdu.toJS();
         
@@ -252,7 +279,7 @@ module.exports = {
         var snmp = require('snmp');
         var pdu = { version : snmp.SNMP_VERSION.v3 };
         var newvalue;
-        fillPdu(pdu);
+        fillPdu(snmp, pdu);
         pdu.command = "trap";
 
 
@@ -265,8 +292,6 @@ module.exports = {
         }catch(e) {
                 assert.equal(e.message, "argument enterprise must be oid.");
         }
-
-
     },
 
 
