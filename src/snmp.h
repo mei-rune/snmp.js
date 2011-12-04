@@ -557,17 +557,24 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
         if(node::Buffer::HasInstance(value->ToObject())) {                        \
             UNWRAP(node::Buffer, buffer, value->ToObject());                      \
             if(fixed < node::Buffer::Length(buffer)) {                            \
-                return ; /* ThrowError("Argument '" #name "' too length, exceed limit '" #fixed "'");   */\
+ /* ThrowError("Argument '" #name "' too length, exceed limit '" #fixed "'");   */\
+                wrap->inner len = fixed;                                          \
+                memcpy(wrap->inner name, node::Buffer::Data(buffer), fixed);      \
+				return;                                                           \
             }                                                                     \
             wrap->inner len = node::Buffer::Length(buffer);                       \
             memcpy(wrap->inner name, node::Buffer::Data(buffer)                   \
                                       , wrap->inner len);                         \
-			wrap->inner name [wrap->inner len ] = 0;                              \
         } else {                                                                  \
             v8::String::Utf8Value u8(value->ToString());                          \
+            if(fixed < u8.length()) {                                             \
+ /* ThrowError("Argument '" #name "' too length, exceed limit '" #fixed "'");   */\
+                wrap->inner len = fixed;                                          \
+                memcpy(wrap->inner name, *u8, fixed);                             \
+				return;                                                           \
+            }                                                                     \
             wrap->inner len = u8.length();                                        \
             memcpy(wrap->inner name, *u8, wrap->inner len);                       \
-			wrap->inner name [wrap->inner len ] = 0;                              \
         }                                                                         \
     }
 

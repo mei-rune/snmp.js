@@ -57,7 +57,6 @@ var assertBuffer = function(assert, actual, expected) {
                 assert.equal(session.retries, 2);
                 assert.equal(session.timeout, 3);
                 assert.equal(session.flags, 4);
-                console.log(session.peername);
                 assert.equal(session.peername, "5");
                 assert.equal(session.remote_port, 6);
                 assert.equal(session.localname, "7");
@@ -86,5 +85,14 @@ var assertBuffer = function(assert, actual, expected) {
                 assert.equal(session.securityLevel, 26);
                 assert.equal(session.paramName, "27");
 
+
+                session.securityAuthKey = "1234567890123456789012345678901234567890"
+                assertBuffer(assert, session.securityAuthKey, "12345678901234567890123456789012");
+
+
+                session.securityPrivKey = "1234567890123456789012345678901234567890"
+                assertBuffer(assert, session.securityPrivKey, "12345678901234567890123456789012");
+
+                console.log("ok");
             }
         };
