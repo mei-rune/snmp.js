@@ -6,40 +6,6 @@
 #include <memory>
 
 
-SNMP_DEFINE_SYMBOL(session);
-SNMP_DEFINE_SYMBOL(process);
-
-SNMP_DEFINE_SYMBOL(version);
-SNMP_DEFINE_SYMBOL(retries);
-SNMP_DEFINE_SYMBOL(timeout);
-SNMP_DEFINE_SYMBOL(flags);
-SNMP_DEFINE_SYMBOL(peername);
-SNMP_DEFINE_SYMBOL(remote_port);
-SNMP_DEFINE_SYMBOL(localname);
-SNMP_DEFINE_SYMBOL(local_port);
-
-SNMP_DEFINE_SYMBOL(sessid);
-SNMP_DEFINE_SYMBOL(community);
-SNMP_DEFINE_SYMBOL(rcvMsgMaxSize);
-SNMP_DEFINE_SYMBOL(sndMsgMaxSize);
-
-SNMP_DEFINE_SYMBOL(isAuthoritative);
-SNMP_DEFINE_SYMBOL(contextEngineID);
-SNMP_DEFINE_SYMBOL(engineBoots);
-SNMP_DEFINE_SYMBOL(engineTime);
-SNMP_DEFINE_SYMBOL(contextName);
-SNMP_DEFINE_SYMBOL(securityEngineID);
-SNMP_DEFINE_SYMBOL(securityName);
-SNMP_DEFINE_SYMBOL(securityAuthProto);
-SNMP_DEFINE_SYMBOL(securityAuthKey);
-SNMP_DEFINE_SYMBOL(securityAuthLocalKey);
-SNMP_DEFINE_SYMBOL(securityPrivProto);
-SNMP_DEFINE_SYMBOL(securityPrivKey);
-SNMP_DEFINE_SYMBOL(securityPrivLocalKey);
-SNMP_DEFINE_SYMBOL(securityModel);
-SNMP_DEFINE_SYMBOL(securityLevel);
-SNMP_DEFINE_SYMBOL(paramName);
-
 
 class Callable {
 
@@ -106,24 +72,16 @@ public:
     virtual ~Session() {
         close();
     }
-
+	
+	
     static void Initialize(v8::Handle<v8::Object> target) {
         v8::HandleScope scope;
 
 
-        process_symbol = NODE_PSYMBOL("process");
-        session_symbol = NODE_PSYMBOL("Session");
-
         v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
-        t->SetClassName(session_symbol);
+        t->SetClassName(Session_symbol);
         t->InstanceTemplate()->SetInternalFieldCount(1);
 
-
-
-
-
-        SNMP_SET_ACCESSOR(t, session);
-        SNMP_SET_ACCESSOR(t, process);
 
         SNMP_SET_ACCESSOR(t, version);
         SNMP_SET_ACCESSOR(t, retries);
@@ -158,7 +116,7 @@ public:
 
 
         NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
-        target->Set(session_symbol, t->GetFunction());
+        target->Set(Session_symbol, t->GetFunction());
     }
 
     static v8::Handle<v8::Value> New(const v8::Arguments& args) {
@@ -180,39 +138,36 @@ public:
         return args.This();
     }
 
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , long,  version);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , int32,  retries);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , long,  timeout);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , ulong,  flags);
+    SNMP_ACCESSOR_DEFINE_STRING_LENLESS(Session, arguments_. , peername);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , ushort,  remote_port);
+    SNMP_ACCESSOR_DEFINE_STRING_LENLESS(Session, arguments_. , localname);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , ushort,  local_port);
 
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , long,  sessid);
+    SNMP_ACCESSOR_DEFINE_USTRING(Session, arguments_. , community, community_len);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , size_t,  rcvMsgMaxSize);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , size_t,  sndMsgMaxSize);
 
-
-    SNMP_ACCESSOR_DEFINE(Session, long,  version);
-    SNMP_ACCESSOR_DEFINE(Session, int32,  retries);
-    SNMP_ACCESSOR_DEFINE(Session, long,  timeout);
-    SNMP_ACCESSOR_DEFINE(Session, ulong,  flags);
-    SNMP_ACCESSOR_DEFINE_STRING_LENLESS(Session, peername);
-    SNMP_ACCESSOR_DEFINE(Session, ushort,  remote_port);
-    SNMP_ACCESSOR_DEFINE_STRING_LENLESS(Session, localname);
-    SNMP_ACCESSOR_DEFINE(Session, ushort,  local_port);
-
-    SNMP_ACCESSOR_DEFINE(Session, long,  sessid);
-    SNMP_ACCESSOR_DEFINE_USTRING(Session, community, community_len);
-    SNMP_ACCESSOR_DEFINE(Session, size_t,  rcvMsgMaxSize);
-    SNMP_ACCESSOR_DEFINE(Session, size_t,  sndMsgMaxSize);
-
-    SNMP_ACCESSOR_DEFINE(Session, uchar,  isAuthoritative);
-    SNMP_ACCESSOR_DEFINE_USTRING(Session, contextEngineID, contextEngineIDLen);
-    SNMP_ACCESSOR_DEFINE(Session, uint,  engineBoots);
-    SNMP_ACCESSOR_DEFINE(Session, uint,  engineTime);
-    SNMP_ACCESSOR_DEFINE_STRING(Session, contextName, contextNameLen);
-    SNMP_ACCESSOR_DEFINE_USTRING(Session, securityEngineID, securityEngineIDLen);
-    SNMP_ACCESSOR_DEFINE_STRING(Session, securityName, securityNameLen);
-    SNMP_ACCESSOR_DEFINE_OID(Session, securityAuthProto, securityAuthProtoLen);
-    SNMP_ACCESSOR_DEFINE_FIXED_USTRING(Session, securityAuthKey, securityAuthKeyLen, USM_AUTH_KU_LEN);
-    SNMP_ACCESSOR_DEFINE_USTRING(Session, securityAuthLocalKey, securityAuthLocalKeyLen);
-    SNMP_ACCESSOR_DEFINE_OID(Session,  securityPrivProto, securityPrivProtoLen);
-    SNMP_ACCESSOR_DEFINE_FIXED_USTRING(Session, securityPrivKey, securityPrivKeyLen, USM_PRIV_KU_LEN);
-    SNMP_ACCESSOR_DEFINE_USTRING(Session, securityPrivLocalKey, securityPrivLocalKeyLen);
-    SNMP_ACCESSOR_DEFINE(Session, int32,  securityModel);
-    SNMP_ACCESSOR_DEFINE(Session, int32,  securityLevel);
-    SNMP_ACCESSOR_DEFINE_STRING_LENLESS(Session, paramName);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , uchar,  isAuthoritative);
+    SNMP_ACCESSOR_DEFINE_USTRING(Session, arguments_. , contextEngineID, contextEngineIDLen);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , uint32,  engineBoots);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , uint32,  engineTime);
+    SNMP_ACCESSOR_DEFINE_STRING(Session, arguments_. , contextName, contextNameLen);
+    SNMP_ACCESSOR_DEFINE_USTRING(Session, arguments_. , securityEngineID, securityEngineIDLen);
+    SNMP_ACCESSOR_DEFINE_STRING(Session, arguments_. , securityName, securityNameLen);
+    SNMP_ACCESSOR_DEFINE_OID(Session, arguments_. , securityAuthProto, securityAuthProtoLen);
+    SNMP_ACCESSOR_DEFINE_FIXED_USTRING(Session, arguments_. , securityAuthKey, securityAuthKeyLen, USM_AUTH_KU_LEN);
+    SNMP_ACCESSOR_DEFINE_USTRING(Session, arguments_. , securityAuthLocalKey, securityAuthLocalKeyLen);
+    SNMP_ACCESSOR_DEFINE_OID(Session, arguments_. , securityPrivProto, securityPrivProtoLen);
+    SNMP_ACCESSOR_DEFINE_FIXED_USTRING(Session, arguments_. , securityPrivKey, securityPrivKeyLen, USM_PRIV_KU_LEN);
+    SNMP_ACCESSOR_DEFINE_USTRING(Session, arguments_. , securityPrivLocalKey, securityPrivLocalKeyLen);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , int32,  securityModel);
+    SNMP_ACCESSOR_DEFINE(Session, arguments_. , int32,  securityLevel);
+    SNMP_ACCESSOR_DEFINE_STRING_LENLESS(Session, arguments_. , paramName);
 
 
 

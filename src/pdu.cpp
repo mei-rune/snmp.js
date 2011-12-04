@@ -3,38 +3,6 @@
 
 #include "snmp.h"
 
-SNMP_DEFINE_SYMBOL(pdu);
-SNMP_DEFINE_SYMBOL(oid);
-SNMP_DEFINE_SYMBOL(type);
-SNMP_DEFINE_SYMBOL(value);
-
-SNMP_DEFINE_SYMBOL(version);
-SNMP_DEFINE_SYMBOL(command);
-SNMP_DEFINE_SYMBOL(reqid);
-SNMP_DEFINE_SYMBOL(msgid);
-SNMP_DEFINE_SYMBOL(transid);
-SNMP_DEFINE_SYMBOL(sessid);
-SNMP_DEFINE_SYMBOL(errstat);
-SNMP_DEFINE_SYMBOL(errindex);
-SNMP_DEFINE_SYMBOL(time);
-SNMP_DEFINE_SYMBOL(flags);
-SNMP_DEFINE_SYMBOL(securityModel);
-SNMP_DEFINE_SYMBOL(securityLevel);
-SNMP_DEFINE_SYMBOL(msgParseModel);
-SNMP_DEFINE_SYMBOL(tDomain);
-SNMP_DEFINE_SYMBOL(community);
-SNMP_DEFINE_SYMBOL(enterprise);
-SNMP_DEFINE_SYMBOL(trap_type);
-//SNMP_DEFINE_SYMBOL(agent_addr);
-SNMP_DEFINE_SYMBOL(specific_type);
-SNMP_DEFINE_SYMBOL(contextEngineID);
-SNMP_DEFINE_SYMBOL(contextName);
-SNMP_DEFINE_SYMBOL(securityEngineID);
-SNMP_DEFINE_SYMBOL(securityName);
-SNMP_DEFINE_SYMBOL(priority);
-SNMP_DEFINE_SYMBOL(range_subid);
-SNMP_DEFINE_SYMBOL(variableBindings);
-
 
 
 static v8::Persistent<v8::Function> constructor;
@@ -69,18 +37,10 @@ public:
     static void Initialize(v8::Handle<v8::Object> target) {
         v8::HandleScope scope;
 
-
-        pdu_symbol = NODE_PSYMBOL("Pdu");
-        oid_symbol = NODE_PSYMBOL("oid");
-        type_symbol = NODE_PSYMBOL("type");
-        value_symbol = NODE_PSYMBOL("value");
-        variableBindings_symbol = NODE_PSYMBOL("variableBindings");
-
-
         v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
 
 
-        t->SetClassName(pdu_symbol);
+        t->SetClassName(Pdu_symbol);
         t->InstanceTemplate()->SetInternalFieldCount(1);
 
         NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
@@ -112,7 +72,7 @@ public:
         SNMP_SET_ACCESSOR(t, range_subid)
 
 
-        target->Set(pdu_symbol, t->GetFunction());
+        target->Set(Pdu_symbol, t->GetFunction());
 
         constructor = v8::Persistent<v8::Function>::New(t->GetFunction());
 
@@ -139,7 +99,7 @@ public:
         return args.This();
     }
 
-    SNMP_ACCESSOR_DEFINE(Pdu, long, version)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, version)
 
     //static v8::Handle<v8::Value> Get_version(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
     //	v8::HandleScope scope;
@@ -153,20 +113,20 @@ public:
     //  wrap->native_->version = value->Int32Value();
     //}
 
-    SNMP_ACCESSOR_DEFINE(Pdu, int32, command)
-    SNMP_ACCESSOR_DEFINE(Pdu, long, reqid)
-    SNMP_ACCESSOR_DEFINE(Pdu, long, msgid)
-    SNMP_ACCESSOR_DEFINE(Pdu, long, transid)
-    SNMP_ACCESSOR_DEFINE(Pdu, long, sessid)
-    SNMP_ACCESSOR_DEFINE(Pdu, long, errstat)
-    SNMP_ACCESSOR_DEFINE(Pdu, long, errindex)
-    SNMP_ACCESSOR_DEFINE(Pdu, ulong, time)
-    SNMP_ACCESSOR_DEFINE(Pdu, ulong, flags)
-    SNMP_ACCESSOR_DEFINE(Pdu, int32, securityModel)
-    SNMP_ACCESSOR_DEFINE(Pdu, int32, securityLevel)
-    SNMP_ACCESSOR_DEFINE(Pdu, int32, msgParseModel)
-    SNMP_ACCESSOR_DEFINE_GET_OID(Pdu, tDomain, tDomainLen)
-    SNMP_ACCESSOR_DEFINE_USTRING(Pdu, community, community_len)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, int32, command)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, reqid)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, msgid)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, transid)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, sessid)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, errstat)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, errindex)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, ulong, time)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, ulong, flags)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, int32, securityModel)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, int32, securityLevel)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, int32, msgParseModel)
+    SNMP_ACCESSOR_DEFINE_GET_OID(Pdu, native_->, tDomain, tDomainLen)
+    SNMP_ACCESSOR_DEFINE_USTRING(Pdu, native_->, community, community_len)
 
 
     //static v8::Handle<v8::Value> Get_community(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
@@ -190,7 +150,7 @@ public:
     //    wrap->native_->community_len = node::Buffer::Length(buffer);
     //}
 
-    SNMP_ACCESSOR_DEFINE_OID(Pdu, enterprise, enterprise_length)
+    SNMP_ACCESSOR_DEFINE_OID(Pdu, native_->, enterprise, enterprise_length)
 
     //
     //static v8::Handle<v8::Value> Get_enterprise(v8::Local<v8::String> propertyName, const v8::AccessorInfo& info) {
@@ -214,17 +174,17 @@ public:
 //       wrap->native_->enterprise_length = new_len;
     //}
 
-    SNMP_ACCESSOR_DEFINE(Pdu, long, trap_type)
-    SNMP_ACCESSOR_DEFINE(Pdu, long, specific_type)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, trap_type)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, long, specific_type)
 
-    SNMP_ACCESSOR_DEFINE_IP4(Pdu, agent_addr)
+    SNMP_ACCESSOR_DEFINE_IP4(Pdu, native_->, agent_addr)
 
-    SNMP_ACCESSOR_DEFINE_USTRING(Pdu, securityEngineID, securityEngineIDLen)
-    SNMP_ACCESSOR_DEFINE_USTRING(Pdu, contextEngineID, contextEngineIDLen)
-    SNMP_ACCESSOR_DEFINE_STRING(Pdu, contextName, contextNameLen)
-    SNMP_ACCESSOR_DEFINE_STRING(Pdu, securityName, securityNameLen)
-    SNMP_ACCESSOR_DEFINE(Pdu, int32, priority)
-    SNMP_ACCESSOR_DEFINE(Pdu, int32, range_subid)
+    SNMP_ACCESSOR_DEFINE_USTRING(Pdu, native_->, securityEngineID, securityEngineIDLen)
+    SNMP_ACCESSOR_DEFINE_USTRING(Pdu, native_->, contextEngineID, contextEngineIDLen)
+    SNMP_ACCESSOR_DEFINE_STRING(Pdu, native_->, contextName, contextNameLen)
+    SNMP_ACCESSOR_DEFINE_STRING(Pdu, native_->, securityName, securityNameLen)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, int32, priority)
+    SNMP_ACCESSOR_DEFINE(Pdu, native_->, int32, range_subid)
 
     //static v8::Handle<v8::Value> Get_version(const v8::Arguments& args){
     //	v8::HandleScope scope;

@@ -140,11 +140,26 @@ inline v8::Handle<v8::Value> from_int32(int32_t value) {
     return v8::Integer::New(value);
 }
 
+inline v8::Handle<v8::Value> from_uint16(uint16_t value) {
+    return v8::Integer::NewFromUnsigned(value);
+}
+
+inline v8::Handle<v8::Value> from_int16(int16_t value) {
+    return v8::Integer::New(value);
+}
+
+inline v8::Handle<v8::Value> from_ushort(uint16_t value) {
+    return v8::Integer::NewFromUnsigned(value);
+}
+
 inline v8::Handle<v8::Value> from_int8(int8_t value) {
     return v8::Integer::New(value);
 }
 
 inline v8::Handle<v8::Value> from_uint8(uint8_t value) {
+    return v8::Integer::New(value);
+}
+inline v8::Handle<v8::Value> from_uchar(u_char value) {
     return v8::Integer::New(value);
 }
 
@@ -153,6 +168,11 @@ inline v8::Handle<v8::Value> from_ustring(const u_char* value, size_t len) {
 }
 inline v8::Handle<v8::Value> from_string(const char* value, size_t len) {
     return v8::String::New((const char*)value, len);
+}
+
+
+inline v8::Handle<v8::Value> from_size_t(size_t value) {
+    return from_uint32(value);
 }
 
 inline v8::Handle<v8::Value> from_oid(const oid* name, size_t len) {
@@ -173,7 +193,35 @@ inline int8_t to_int8(v8::Handle<v8::Value>& obj, int8_t defaultValue = 0) {
     return (int8_t)obj->Int32Value();
 }
 
+inline u_char to_uchar(v8::Handle<v8::Value>& obj, u_char defaultValue = 0) {
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return (u_char)obj->Int32Value();
+}
+
 inline uint8_t to_uint8(v8::Handle<v8::Value>& obj, uint8_t defaultValue = 0) {
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return (uint8_t)obj->Int32Value();
+}
+
+
+inline int8_t to_int16(v8::Handle<v8::Value>& obj, int16_t defaultValue = 0) {
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return (int8_t)obj->Int32Value();
+}
+
+inline uint8_t to_uint16(v8::Handle<v8::Value>& obj, uint16_t defaultValue = 0) {
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return (uint8_t)obj->Int32Value();
+}
+inline uint8_t to_ushort(v8::Handle<v8::Value>& obj, uint16_t defaultValue = 0) {
     if(!obj->IsNumber()) {
         return defaultValue;
     }
@@ -234,6 +282,13 @@ inline uint64_t to_uint64(v8::Handle<v8::Value>& obj, uint64_t defaultValue = 0)
 inline uint64_t to_uint64(v8::Handle<v8::Object>& obj, const char* key
                           , uint64_t defaultValue = 0) {
     return to_uint64(obj->Get(v8::String::New(key)), defaultValue);
+}
+
+inline size_t to_size_t(v8::Handle<v8::Value>& obj, size_t defaultValue = 0) {
+    if(!obj->IsNumber()) {
+        return defaultValue;
+    }
+    return obj->IntegerValue();
 }
 
 inline float to_float(v8::Handle<v8::Value>& obj, float defaultValue = 0) {
@@ -298,7 +353,9 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
                     v8::ReadOnly|v8::DontDelete))
 
 
-#define SNMP_DEFINE_SYMBOL(name) static v8::Persistent<v8::String> name##_symbol;
+#define SNMP_DECLARE_SYMBOL(name) extern v8::Persistent<v8::String> name##_symbol;
+#define SNMP_DEFINE_SYMBOL(name) v8::Persistent<v8::String> name##_symbol;
+#define SNMP_INIT_SYMBOL(name) name##_symbol = NODE_PSYMBOL(#name);
 
 
 
@@ -345,7 +402,7 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 				pdu->name = (char*)malloc(u8.length());                             \
 			}                                                                       \
 			pdu->len = u8.length();                                                 \
-			memcpy(pdu->name,  *u8, pdu->len);                                     \
+			memcpy(pdu->name,  *u8, pdu->len);                                      \
 		}
 
 #define C2JS_OID(pdu, obj, name, len) if(0 < pdu->len) {                            \
@@ -371,186 +428,249 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 
 
 #define SNMP_SET_ACCESSOR(target, name)                                           \
-    name##_symbol = NODE_PSYMBOL(#name);                                          \
 	target->PrototypeTemplate()->SetAccessor(name##_symbol                        \
 	                                            , Get_##name, Set_##name);
 
 
 #define SNMP_SET_READONLY_ACCESSOR(target, name)                                  \
-    name##_symbol = NODE_PSYMBOL(#name);                                          \
 	target->PrototypeTemplate()->SetAccessor(name##_symbol, Get_##name);
 
-#define SNMP_ACCESSOR_DEFINE_GET(this_type, value_type,  name)                    \
+#define SNMP_ACCESSOR_DEFINE_GET(this_type, inner, value_type,  name)             \
 	static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
                                         , const v8::AccessorInfo& info) {         \
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
-		return scope.Close(from_##value_type(wrap->native_->name));               \
+		return scope.Close(from_##value_type(wrap->inner name));                  \
 	}
 
-
-#define SNMP_ACCESSOR_DEFINE_SET(this_type, value_type,  name)                    \
+  
+#define SNMP_ACCESSOR_DEFINE_SET(this_type, inner, value_type,  name)             \
     static void Set_##name(v8::Local<v8::String> propertyName                     \
            , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {          \
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
-        wrap->native_->name = to_##value_type(value);                             \
-	}
+        wrap->inner name = to_##value_type(value);                                \
+	}   
+   
 
-
-#define SNMP_ACCESSOR_DEFINE_GET_OID(this_type, name, len)                        \
+#define SNMP_ACCESSOR_DEFINE_GET_OID(this_type, inner, name, len)                 \
 	static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
                                         , const v8::AccessorInfo& info) {         \
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
-		return scope.Close(from_oid(wrap->native_->name, wrap->native_->len));    \
+		return scope.Close(from_oid(wrap->inner name, wrap->inner len));          \
 	}
 
 
-#define SNMP_ACCESSOR_DEFINE_SET_OID(this_type, name, len)                        \
+#define SNMP_ACCESSOR_DEFINE_SET_OID(this_type, inner, name, len)                 \
     static void Set_##name(v8::Local<v8::String> propertyName                     \
            , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {          \
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
-		oid* new_val = to_oid(value, wrap->native_->name, &(wrap->native_->len)); \
+		oid* new_val = to_oid(value, wrap->inner name, &(wrap->inner len));       \
 		if(NULL == new_val) {                                                     \
 			return; /* ThrowTypeError("argument name must be oid."); */           \
 		}                                                                         \
-	    if(new_val != wrap->native_->name) {                                      \
-			if(0 != wrap->native_->name) { free(wrap->native_->name); }           \
-			wrap->native_->name = new_val;                                        \
+	    if(new_val != wrap->inner name) {                                         \
+			if(0 != wrap->inner name) { free(wrap->inner name); }                 \
+			wrap->inner name = new_val;                                           \
 	    }                                                                         \
 	}
 
 
-#define SNMP_ACCESSOR_DEFINE_GET_STRING(char_type, this_type, name, len)          \
+#define SNMP_ACCESSOR_DEFINE_GET_STRING(this_type, inner, name, len)              \
 	static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
                                            , const v8::AccessorInfo& info) {      \
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
-		return scope.Close(from_string(wrap->native_->name                        \
-		                                               , wrap->native_->len));    \
+		return scope.Close(from_string(wrap->inner name  , wrap->inner len));     \
 	}
 
 
-#define SNMP_ACCESSOR_DEFINE_SET_STRING(char_type, this_type, name, len)          \
+#define SNMP_ACCESSOR_DEFINE_SET_STRING(this_type, inner, name, len)              \
     static void Set_##name(v8::Local<v8::String> propertyName                     \
                   , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {   \
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
 		v8::String::Utf8Value u8(value->ToString());                              \
-		COPY_BYTES(char, wrap->native_, name, len, *u8, u8.length());             \
+		COPY_BYTES(char, wrap, inner name, inner len, *u8, u8.length());          \
 	}
 
 
 
 
-#define SNMP_ACCESSOR_DEFINE_GET_STRING_LENLESS(this_type, name)                  \
+#define SNMP_ACCESSOR_DEFINE_GET_STRING_LENLESS(this_type, inner, name)           \
     static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
                                            , const v8::AccessorInfo& info) {      \
         v8::HandleScope scope;                                                    \
         UNWRAP(this_type, wrap, info.This());                                     \
-        return scope.Close(from_string(wrap->native_->name                        \
-                                              , strlen(wrap->native_->name)));    \
+        return scope.Close(from_string(wrap->inner name                           \
+                                              , strlen(wrap->inner name)));       \
     }
 
 
-#define SNMP_ACCESSOR_DEFINE_SET_STRING_LENLESS(this_type, name)                  \
+#define SNMP_ACCESSOR_DEFINE_SET_STRING_LENLESS(this_type, inner, name)           \
     static void Set_##name(v8::Local<v8::String> propertyName                     \
                   , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {   \
         v8::HandleScope scope;                                                    \
         UNWRAP(this_type, wrap, info.This());                                     \
         v8::String::Utf8Value u8(value->ToString());                              \
-        wrap->native_->name = strndup(*u8, u8.length());                          \
+        wrap->inner name = (char*)malloc(sizeof(char) * u8.length());             \
+        memcpy(wrap->inner name, *u8, u8.length());                               \
+        wrap->inner name[u8.length()] = 0;                                        \
     }
 
 
-#define SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)                    \
+#define SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, inner, name, len)             \
 	static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
                                               , const v8::AccessorInfo& info) {   \
 		v8::HandleScope scope;                                                    \
-		UNWRAP(Pdu, wrap, info.This());                                           \
-		return scope.Close(from_ustring(wrap->native_->name                       \
-		                                , wrap->native_->len));                   \
+		UNWRAP(this_type, wrap, info.This());                                     \
+		return scope.Close(from_ustring(wrap->inner name                          \
+		                                , wrap->inner len));                      \
 	}
 
-#define SNMP_ACCESSOR_DEFINE_SET_USTRING(this_type, name, len)                    \
+#define SNMP_ACCESSOR_DEFINE_SET_USTRING(this_type, inner, name, len)             \
     static void Set_##name(v8::Local<v8::String> propertyName                     \
                    , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {  \
 		v8::HandleScope scope;                                                    \
-		UNWRAP(Pdu, wrap, info.This());                                           \
+		UNWRAP(this_type, wrap, info.This());                                     \
 		                                                                          \
 		if(node::Buffer::HasInstance(value->ToObject())) {                        \
 		    UNWRAP(node::Buffer, buffer, value->ToObject());                      \
-			COPY_BYTES(u_char, wrap->native_                                      \
-                     , name, len, node::Buffer::Data(buffer)                      \
+			COPY_BYTES(u_char, wrap                                               \
+                     , inner name, inner len, node::Buffer::Data(buffer)          \
                      , node::Buffer::Length(buffer));                             \
 		} else {                                                                  \
 	        v8::String::Utf8Value u8(value->ToString());                          \
-			COPY_BYTES(u_char, wrap->native_, name, len, *u8, u8.length());       \
+			COPY_BYTES(u_char, wrap, inner name, inner len, *u8, u8.length());    \
 		}                                                                         \
 	}
 
 
-#define SNMP_ACCESSOR_DEFINE_SET_FIXED_USTRING(this_type, name, len, fixed)       \
+#define SNMP_ACCESSOR_DEFINE_SET_FIXED_USTRING(this_type, inner, name, len, fixed) \
     static void Set_##name(v8::Local<v8::String> propertyName                     \
                    , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {  \
         v8::HandleScope scope;                                                    \
-        UNWRAP(Pdu, wrap, info.This());                                           \
+        UNWRAP(this_type, wrap, info.This());                                     \
                                                                                   \
         if(node::Buffer::HasInstance(value->ToObject())) {                        \
             UNWRAP(node::Buffer, buffer, value->ToObject());                      \
             if(fixed < node::Buffer::Length(buffer)) {                            \
-                return ThrowError("Argument '" #name "' too length, exceed limit '" #fixed "'");   \
+                return ; /* ThrowError("Argument '" #name "' too length, exceed limit '" #fixed "'");   */\
             }                                                                     \
-            memcpy(wrap->native_->name, node::Buffer::Data(buffer)                \
-                                      , node::Buffer::Length(buffer));            \
-            wrap->native_->len = node::Buffer::Length(buffer);                    \
+            wrap->inner len = node::Buffer::Length(buffer);                       \
+            memcpy(wrap->inner name, node::Buffer::Data(buffer)                   \
+                                      , wrap->inner len);                         \
+			wrap->inner name [wrap->inner len ] = 0;                              \
         } else {                                                                  \
             v8::String::Utf8Value u8(value->ToString());                          \
-            memcpy(wrap->native_->name, *u8, u8.length());                        \
-            wrap->native_->len = u8.length();                                     \            
+            wrap->inner len = u8.length();                                        \
+            memcpy(wrap->inner name, *u8, wrap->inner len);                       \
+			wrap->inner name [wrap->inner len ] = 0;                              \
         }                                                                         \
     }
 
-#define SNMP_ACCESSOR_DEFINE(this_type, value_type,  name)                        \
-  SNMP_ACCESSOR_DEFINE_SET(this_type, value_type,  name)                          \
-  SNMP_ACCESSOR_DEFINE_GET(this_type, value_type,  name)
+#define SNMP_ACCESSOR_DEFINE(this_type, value_type, inner, name)                  \
+  SNMP_ACCESSOR_DEFINE_SET(this_type, value_type, inner, name)                    \
+  SNMP_ACCESSOR_DEFINE_GET(this_type, value_type, inner, name)
 
 
-#define SNMP_ACCESSOR_DEFINE_OID(this_type, name, len)                            \
-  SNMP_ACCESSOR_DEFINE_SET_OID(this_type, name, len)                              \
-  SNMP_ACCESSOR_DEFINE_GET_OID(this_type, name, len)
+#define SNMP_ACCESSOR_DEFINE_OID(this_type, inner, name, len)                     \
+  SNMP_ACCESSOR_DEFINE_SET_OID(this_type, inner, name, len)                       \
+  SNMP_ACCESSOR_DEFINE_GET_OID(this_type, inner, name, len)
 
 
-#define SNMP_ACCESSOR_DEFINE_USTRING(this_type, name, len)                        \
-  SNMP_ACCESSOR_DEFINE_SET_USTRING(this_type, name, len)                          \
-  SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)
+#define SNMP_ACCESSOR_DEFINE_USTRING(this_type, inner, name, len)                 \
+  SNMP_ACCESSOR_DEFINE_SET_USTRING(this_type, inner, name, len)                   \
+  SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, inner, name, len)
 
 
-#define SNMP_ACCESSOR_DEFINE_STRING(this_type, name, len)                         \
-  SNMP_ACCESSOR_DEFINE_SET_STRING(char, this_type, name, len)                     \
-  SNMP_ACCESSOR_DEFINE_GET_STRING(char, this_type, name, len)
+#define SNMP_ACCESSOR_DEFINE_STRING(this_type, inner, name, len)                  \
+  SNMP_ACCESSOR_DEFINE_SET_STRING(this_type, inner, name, len)                    \
+  SNMP_ACCESSOR_DEFINE_GET_STRING(this_type, inner, name, len)
 
 
-#define SNMP_ACCESSOR_DEFINE_STRING_LENLESS(this_type, name)                      \
-  SNMP_ACCESSOR_DEFINE_SET_STRING_LENLESS(this_type, name)                        \
-  SNMP_ACCESSOR_DEFINE_GET_STRING_LENLESS(this_type, name)
-
-
-
-#define SNMP_ACCESSOR_DEFINE_FIXED_USTRING(this_type, name, len, fixed)           \
-  SNMP_ACCESSOR_DEFINE_SET_FIXED_USTRING(this_type, name, len, fixed)             \
-  SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, name, len)
+#define SNMP_ACCESSOR_DEFINE_STRING_LENLESS(this_type, inner, name)               \
+  SNMP_ACCESSOR_DEFINE_SET_STRING_LENLESS(this_type, inner, name)                 \
+  SNMP_ACCESSOR_DEFINE_GET_STRING_LENLESS(this_type, inner, name)
 
 
 
-#define SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name)
-#define SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name)
+#define SNMP_ACCESSOR_DEFINE_FIXED_USTRING(this_type, inner, name, len, fixed)    \
+  SNMP_ACCESSOR_DEFINE_SET_FIXED_USTRING(this_type, inner, name, len, fixed)      \
+  SNMP_ACCESSOR_DEFINE_GET_USTRING(this_type, inner, name, len)
 
-#define SNMP_ACCESSOR_DEFINE_IP4(this_type, name)                           \
-  SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, name)                             \
-  SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, name)
 
+
+#define SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, inner, name)
+#define SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, inner, name)
+
+#define SNMP_ACCESSOR_DEFINE_IP4(this_type, inner, name)                         \
+  SNMP_ACCESSOR_DEFINE_SET_IP4(this_type, inner, name)                           \
+  SNMP_ACCESSOR_DEFINE_GET_IP4(this_type, inner, name)
+
+
+
+
+
+SNMP_DECLARE_SYMBOL(Pdu);
+SNMP_DECLARE_SYMBOL(oid);
+SNMP_DECLARE_SYMBOL(type);
+SNMP_DECLARE_SYMBOL(value);
+
+SNMP_DECLARE_SYMBOL(version);
+SNMP_DECLARE_SYMBOL(command);
+SNMP_DECLARE_SYMBOL(reqid);
+SNMP_DECLARE_SYMBOL(msgid);
+SNMP_DECLARE_SYMBOL(transid);
+SNMP_DECLARE_SYMBOL(sessid);
+SNMP_DECLARE_SYMBOL(errstat);
+SNMP_DECLARE_SYMBOL(errindex);
+SNMP_DECLARE_SYMBOL(time);
+SNMP_DECLARE_SYMBOL(flags);
+SNMP_DECLARE_SYMBOL(securityModel);
+SNMP_DECLARE_SYMBOL(securityLevel);
+SNMP_DECLARE_SYMBOL(msgParseModel);
+SNMP_DECLARE_SYMBOL(tDomain);
+SNMP_DECLARE_SYMBOL(community);
+SNMP_DECLARE_SYMBOL(enterprise);
+SNMP_DECLARE_SYMBOL(trap_type);
+//SNMP_DECLARE_SYMBOL(agent_addr);
+SNMP_DECLARE_SYMBOL(specific_type);
+SNMP_DECLARE_SYMBOL(contextEngineID);
+SNMP_DECLARE_SYMBOL(contextName);
+SNMP_DECLARE_SYMBOL(securityEngineID);
+SNMP_DECLARE_SYMBOL(securityName);
+SNMP_DECLARE_SYMBOL(priority);
+SNMP_DECLARE_SYMBOL(range_subid);
+SNMP_DECLARE_SYMBOL(variableBindings);
+
+
+SNMP_DECLARE_SYMBOL(Session);
+SNMP_DECLARE_SYMBOL(process);
+
+SNMP_DECLARE_SYMBOL(retries);
+SNMP_DECLARE_SYMBOL(timeout);
+SNMP_DECLARE_SYMBOL(peername);
+SNMP_DECLARE_SYMBOL(remote_port);
+SNMP_DECLARE_SYMBOL(localname);
+SNMP_DECLARE_SYMBOL(local_port);
+
+SNMP_DECLARE_SYMBOL(rcvMsgMaxSize);
+SNMP_DECLARE_SYMBOL(sndMsgMaxSize);
+
+SNMP_DECLARE_SYMBOL(isAuthoritative);
+SNMP_DECLARE_SYMBOL(engineBoots);
+SNMP_DECLARE_SYMBOL(engineTime);
+SNMP_DECLARE_SYMBOL(securityAuthProto);
+SNMP_DECLARE_SYMBOL(securityAuthKey);
+SNMP_DECLARE_SYMBOL(securityAuthLocalKey);
+SNMP_DECLARE_SYMBOL(securityPrivProto);
+SNMP_DECLARE_SYMBOL(securityPrivKey);
+SNMP_DECLARE_SYMBOL(securityPrivLocalKey);
+SNMP_DECLARE_SYMBOL(securityModel);
+SNMP_DECLARE_SYMBOL(securityLevel);
+SNMP_DECLARE_SYMBOL(paramName);
 
 #endif // _snmp_js_h
