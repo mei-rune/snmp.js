@@ -94,5 +94,28 @@ var assertBuffer = function(assert, actual, expected) {
                 assertBuffer(assert, session.securityPrivKey, "12345678901234567890123456789012");
 
                 console.log("ok");
+            },
+            'test get': function (beforeExit, assert) {
+                var snmp = require('snmp');
+                var session = new snmp.Native.Session();
+                var r;
+                session.peername = "127.0.0.1";
+                session.open();
+
+                var pdu = snmp.createPdu("get");
+                pdu.community = "public";
+                //snmpget -v 2c -c public 127.0.0.1 system.sysDescr.0
+                pdu.version = snmp.SNMP_VERSION.v2c;
+                //pdu.variableBindings.add("system.sysDescr", snmp.DATA_TYPE.ASN_NULL, null);
+                pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
+
+                session.sendNativePdu(pdu, function(code, request, response){
+                        r = response;
+                });
+                session.readData();
+                assert.notEqual(null, r);
             }
+
+
+            
         };

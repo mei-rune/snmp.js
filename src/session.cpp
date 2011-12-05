@@ -30,7 +30,7 @@ public:
 
         v8::TryCatch try_catch;
         v8::Handle<v8::Value> args[] = {
-            from_int32(code), wrap->pdu_
+            from_int32(code), wrap->pdu_, Pdu::fromPdu(pdu)
         };
 
         // get process from global scope.
@@ -38,10 +38,11 @@ public:
         v8::Local<v8::Object> process = global->Get(process_symbol)->ToObject();
 
 
-        wrap->cb_->CallAsFunction(process, 2, args);
+        wrap->cb_->CallAsFunction(process, 3, args);
         if (try_catch.HasCaught()) {
             node::FatalException(try_catch);
         }
+        return 1;
     }
 
 };
@@ -119,6 +120,7 @@ public:
 
         NODE_SET_PROTOTYPE_METHOD(t, "open", Open);
         NODE_SET_PROTOTYPE_METHOD(t, "onData", onData);
+        NODE_SET_PROTOTYPE_METHOD(t, "readData", readData);
         NODE_SET_PROTOTYPE_METHOD(t, "sendPdu", sendPdu);
         NODE_SET_PROTOTYPE_METHOD(t, "sendNativePdu", sendNativePdu);
         NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
@@ -194,7 +196,7 @@ public:
     static v8::Handle<v8::Value> sendNativePdu(const v8::Arguments& args) {
         v8::HandleScope scope;
         UNWRAP(Session, wrap, args.This());
-        if(0 != wrap->session_) {
+        if(0 == wrap->session_) {
             return ThrowError("Session hasn't opened.");
         }
 
@@ -211,7 +213,7 @@ public:
 
         std::auto_ptr<Callable> callable(new Callable(cb, args[0], 0));
 
-        if(0 != snmp_sess_async_send(wrap->session_, pdu->native(),
+        if(0 == snmp_sess_async_send(wrap->session_, pdu->native(),
                                      Callable::OnEvent, callable.get())) {
             return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
         }
@@ -222,7 +224,7 @@ public:
     static v8::Handle<v8::Value> sendPdu(const v8::Arguments& args) {
         v8::HandleScope scope;
         UNWRAP(Session, wrap, args.This());
-        if(0 != wrap->session_) {
+        if(0 == wrap->session_) {
             return ThrowError("Session hasn't opened.");
         }
 
@@ -261,7 +263,7 @@ public:
 
         v8::HandleScope scope;
         UNWRAP(Session, wrap, args.This());
-        if(0 != wrap->session_) {
+        if(0 == wrap->session_) {
             return ThrowError("Session hasn't opened.");
         }
 
