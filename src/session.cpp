@@ -11,9 +11,11 @@ class Callable {
 
 private:
     v8::Persistent<v8::Object> cb_;
-    v8::Persistent<v8::Object> pdu_;
+    v8::Persistent<v8::Value> pdu_;
+    netsnmp_pdu* native_;
 public:
-    Callable() {
+    Callable(v8::Handle<v8::Object> cb, v8::Handle<v8::Value> pdu, netsnmp_pdu* native)
+        : cb_( v8::Persistent<v8::Object>::New(cb)), pdu_(v8::Persistent<v8::Value>(pdu)), native_(0) {
     }
 
     virtual ~Callable() {
@@ -28,7 +30,7 @@ public:
 
         v8::TryCatch try_catch;
         v8::Handle<v8::Value> args[] = {
-            from_int32(code), wrap->pdu_.IsEmpty()?Pdu::fromPdu(pdu):wrap->pdu_
+            from_int32(code), wrap->pdu_
         };
 
         // get process from global scope.
@@ -72,8 +74,8 @@ public:
     virtual ~Session() {
         close();
     }
-	
-	
+
+
     static void Initialize(v8::Handle<v8::Object> target) {
         v8::HandleScope scope;
 
@@ -115,6 +117,10 @@ public:
         SNMP_SET_ACCESSOR(t, paramName);
 
 
+        NODE_SET_PROTOTYPE_METHOD(t, "open", Open);
+        NODE_SET_PROTOTYPE_METHOD(t, "onData", onData);
+        NODE_SET_PROTOTYPE_METHOD(t, "sendPdu", sendPdu);
+        NODE_SET_PROTOTYPE_METHOD(t, "sendNativePdu", sendNativePdu);
         NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
         target->Set(Session_symbol, t->GetFunction());
     }
@@ -189,27 +195,158 @@ public:
         v8::HandleScope scope;
         UNWRAP(Session, wrap, args.This());
         if(0 != wrap->session_) {
-            return ThrowError("Session already opened.");
+            return ThrowError("Session hasn't opened.");
         }
 
         if(2 != args.Length()) {
-            return ThrowError("Must pass pdu and cb arguments to constructor.");
+            return ThrowError("Must pass pdu and cb arguments to sendNativePdu.");
         }
 
         v8::Handle<v8::Object> cb = args[1]->ToObject();
         if (!cb->IsCallable()) {
-            return ThrowError("Must pass pdu and cb arguments to constructor.");
+            return ThrowError("Must pass pdu and cb arguments to sendNativePdu.");
         }
 
         UNWRAP(Pdu, pdu, args[0]->ToObject());
 
-        std::auto_ptr<Callable> callable(new Callable());
+        std::auto_ptr<Callable> callable(new Callable(cb, args[0], 0));
 
         if(0 != snmp_sess_async_send(wrap->session_, pdu->native(),
                                      Callable::OnEvent, callable.get())) {
             return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
         }
         callable.release();
+        return v8::Undefined();
+    }
+
+    static v8::Handle<v8::Value> sendPdu(const v8::Arguments& args) {
+        v8::HandleScope scope;
+        UNWRAP(Session, wrap, args.This());
+        if(0 != wrap->session_) {
+            return ThrowError("Session hasn't opened.");
+        }
+
+        if(2 != args.Length()) {
+            return ThrowError("Must pass pdu and cb arguments to sendPdu.");
+        }
+
+        v8::Handle<v8::Object> cb = args[1]->ToObject();
+        if (!cb->IsCallable()) {
+            return ThrowError("Must pass pdu and cb arguments to sendPdu.");
+        }
+
+        netsnmp_pdu* pdu = snmp_pdu_create(SNMP_MSG_GET);
+        v8::Handle<v8::Value> ret = Pdu::toPdu(args[0], pdu);
+        if(!ret->IsUndefined()) {
+            return ret;
+        }
+
+
+        std::auto_ptr<Callable> callable(new Callable(cb, args[0], pdu));
+
+        if(0 != snmp_sess_async_send(wrap->session_, pdu,
+                                     Callable::OnEvent, callable.get())) {
+            return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
+        }
+        callable.release();
+        return v8::Undefined();
+    }
+
+    static v8::Handle<v8::Value> readData(const v8::Arguments& args) {
+
+        fd_set fdset;
+        struct timeval timeout;
+        int block = 1;
+        int numfds = 0;
+
+        v8::HandleScope scope;
+        UNWRAP(Session, wrap, args.This());
+        if(0 != wrap->session_) {
+            return ThrowError("Session hasn't opened.");
+        }
+
+        if(0 != args.Length()) {
+            return ThrowError("Must not pass any arguments to readData.");
+        }
+
+        FD_ZERO(&fdset);
+
+        /**
+         * block input:  set to 1 if input timeout value is undefined
+         * set to 0 if input timeout value is defined
+         * block output: set to 1 if output timeout value is undefined
+         * set to 0 if output rimeout vlaue id defined
+         */
+        snmp_sess_select_info(wrap->session_, &numfds, &fdset,
+                              &timeout, &block);
+
+        if(-1 == snmp_sess_read(wrap->session_, &fdset)) {
+            return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
+        }
+        return v8::Undefined();
+    }
+
+    static v8::Handle<v8::Value> selectInfo(const v8::Arguments& args) {
+
+        fd_set fdset;
+        struct timeval timeout;
+        int block = 1;
+        int numfds = 0;
+
+        v8::HandleScope scope;
+        UNWRAP(Session, wrap, args.This());
+        if(0 != wrap->session_) {
+            return ThrowError("Session hasn't opened.");
+        }
+
+        if(0 != args.Length()) {
+            return ThrowError("Must not pass any arguments to readData.");
+        }
+
+        FD_ZERO(&fdset);
+
+        /**
+         * block input:  set to 1 if input timeout value is undefined
+         * set to 0 if input timeout value is defined
+         * block output: set to 1 if output timeout value is undefined
+         * set to 0 if output rimeout vlaue id defined
+         */
+        if(1 != snmp_sess_select_info(wrap->session_, &numfds, &fdset,
+                                      &timeout, &block)) {
+            return v8::Undefined();
+        }
+
+        v8::Handle<v8::Object> ret = v8::Object::New();
+        // NOTICE: this is hack.
+        ret->Set(socket_symbol, from_int32(numfds-1));
+
+        if(0 == block) {
+            v8::Handle<v8::Object> timeout_v8 = v8::Object::New();
+            timeout_v8->Set(tv_sec_symbol,  from_long(timeout.tv_sec));
+            timeout_v8->Set(tv_usec_symbol, from_long(timeout.tv_usec));
+            ret->Set(timeout_symbol, timeout_v8);
+        }
+
+        return scope.Close(ret);
+    }
+
+    static v8::Handle<v8::Value> onData(const v8::Arguments& args) {
+
+        fd_set fdset;
+        v8::HandleScope scope;
+        UNWRAP(Session, wrap, args.This());
+        if(0 != wrap->session_) {
+            return ThrowError("Session hasn't opened.");
+        }
+
+        if(0 != args.Length()) {
+            return ThrowError("Must not pass any arguments to onData.");
+        }
+        FD_ZERO(&fdset);
+
+        if(-1 == snmp_sess_read(wrap->session_, &fdset)) {
+            return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
+        }
         return v8::Undefined();
     }
 

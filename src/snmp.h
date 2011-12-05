@@ -443,15 +443,15 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
 		return scope.Close(from_##value_type(wrap->inner name));                  \
 	}
 
-  
+
 #define SNMP_ACCESSOR_DEFINE_SET(this_type, inner, value_type,  name)             \
     static void Set_##name(v8::Local<v8::String> propertyName                     \
            , v8::Local<v8::Value> value, const v8::AccessorInfo& info) {          \
 		v8::HandleScope scope;                                                    \
 		UNWRAP(this_type, wrap, info.This());                                     \
         wrap->inner name = to_##value_type(value);                                \
-	}   
-   
+	}
+
 
 #define SNMP_ACCESSOR_DEFINE_GET_OID(this_type, inner, name, len)                 \
 	static v8::Handle<v8::Value> Get_##name(v8::Local<v8::String> propertyName    \
@@ -679,5 +679,10 @@ SNMP_DECLARE_SYMBOL(securityPrivLocalKey);
 SNMP_DECLARE_SYMBOL(securityModel);
 SNMP_DECLARE_SYMBOL(securityLevel);
 SNMP_DECLARE_SYMBOL(paramName);
+
+
+SNMP_DECLARE_SYMBOL(socket);
+SNMP_DECLARE_SYMBOL(tv_sec);
+SNMP_DECLARE_SYMBOL(tv_usec);
 
 #endif // _snmp_js_h

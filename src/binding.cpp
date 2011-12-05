@@ -104,6 +104,11 @@ SNMP_DEFINE_SYMBOL(securityPrivLocalKey);
 SNMP_DEFINE_SYMBOL(paramName);
 
 
+
+SNMP_DEFINE_SYMBOL(socket);
+SNMP_DEFINE_SYMBOL(tv_sec);
+SNMP_DEFINE_SYMBOL(tv_usec);
+
 // --- Entry point ---
 #ifdef _MSC_VER
 extern "C" __declspec (dllexport)
@@ -117,67 +122,70 @@ void init(v8::Handle<v8::Object> target) {
 
     v8::HandleScope scope;
 
-	
-	SNMP_INIT_SYMBOL(Pdu);
-	SNMP_INIT_SYMBOL(oid);
-	SNMP_INIT_SYMBOL(type);
-	SNMP_INIT_SYMBOL(value);
 
-	SNMP_INIT_SYMBOL(version);
-	SNMP_INIT_SYMBOL(command);
-	SNMP_INIT_SYMBOL(reqid);
-	SNMP_INIT_SYMBOL(msgid);
-	SNMP_INIT_SYMBOL(transid);
-	SNMP_INIT_SYMBOL(sessid);
-	SNMP_INIT_SYMBOL(errstat);
-	SNMP_INIT_SYMBOL(errindex);
-	SNMP_INIT_SYMBOL(time);
-	SNMP_INIT_SYMBOL(flags);
-	SNMP_INIT_SYMBOL(securityModel);
-	SNMP_INIT_SYMBOL(securityLevel);
-	SNMP_INIT_SYMBOL(msgParseModel);
-	SNMP_INIT_SYMBOL(tDomain);
-	SNMP_INIT_SYMBOL(community);
-	SNMP_INIT_SYMBOL(enterprise);
-	SNMP_INIT_SYMBOL(trap_type);
-	//SNMP_INIT_SYMBOL(agent_addr);
-	SNMP_INIT_SYMBOL(specific_type);
-	SNMP_INIT_SYMBOL(contextEngineID);
-	SNMP_INIT_SYMBOL(contextName);
-	SNMP_INIT_SYMBOL(securityEngineID);
-	SNMP_INIT_SYMBOL(securityName);
-	SNMP_INIT_SYMBOL(priority);
-	SNMP_INIT_SYMBOL(range_subid);
-	SNMP_INIT_SYMBOL(variableBindings);
+    SNMP_INIT_SYMBOL(Pdu);
+    SNMP_INIT_SYMBOL(oid);
+    SNMP_INIT_SYMBOL(type);
+    SNMP_INIT_SYMBOL(value);
+
+    SNMP_INIT_SYMBOL(version);
+    SNMP_INIT_SYMBOL(command);
+    SNMP_INIT_SYMBOL(reqid);
+    SNMP_INIT_SYMBOL(msgid);
+    SNMP_INIT_SYMBOL(transid);
+    SNMP_INIT_SYMBOL(sessid);
+    SNMP_INIT_SYMBOL(errstat);
+    SNMP_INIT_SYMBOL(errindex);
+    SNMP_INIT_SYMBOL(time);
+    SNMP_INIT_SYMBOL(flags);
+    SNMP_INIT_SYMBOL(securityModel);
+    SNMP_INIT_SYMBOL(securityLevel);
+    SNMP_INIT_SYMBOL(msgParseModel);
+    SNMP_INIT_SYMBOL(tDomain);
+    SNMP_INIT_SYMBOL(community);
+    SNMP_INIT_SYMBOL(enterprise);
+    SNMP_INIT_SYMBOL(trap_type);
+    //SNMP_INIT_SYMBOL(agent_addr);
+    SNMP_INIT_SYMBOL(specific_type);
+    SNMP_INIT_SYMBOL(contextEngineID);
+    SNMP_INIT_SYMBOL(contextName);
+    SNMP_INIT_SYMBOL(securityEngineID);
+    SNMP_INIT_SYMBOL(securityName);
+    SNMP_INIT_SYMBOL(priority);
+    SNMP_INIT_SYMBOL(range_subid);
+    SNMP_INIT_SYMBOL(variableBindings);
 
 
-	SNMP_INIT_SYMBOL(Session);
-	SNMP_INIT_SYMBOL(process);
+    SNMP_INIT_SYMBOL(Session);
+    SNMP_INIT_SYMBOL(process);
 
-	SNMP_INIT_SYMBOL(retries);
-	SNMP_INIT_SYMBOL(timeout);
-	SNMP_INIT_SYMBOL(peername);
-	SNMP_INIT_SYMBOL(remote_port);
-	SNMP_INIT_SYMBOL(localname);
-	SNMP_INIT_SYMBOL(local_port);
+    SNMP_INIT_SYMBOL(retries);
+    SNMP_INIT_SYMBOL(timeout);
+    SNMP_INIT_SYMBOL(peername);
+    SNMP_INIT_SYMBOL(remote_port);
+    SNMP_INIT_SYMBOL(localname);
+    SNMP_INIT_SYMBOL(local_port);
 
-	SNMP_INIT_SYMBOL(sessid);
-	SNMP_INIT_SYMBOL(rcvMsgMaxSize);
-	SNMP_INIT_SYMBOL(sndMsgMaxSize);
+    SNMP_INIT_SYMBOL(sessid);
+    SNMP_INIT_SYMBOL(rcvMsgMaxSize);
+    SNMP_INIT_SYMBOL(sndMsgMaxSize);
 
-	SNMP_INIT_SYMBOL(isAuthoritative);
-	SNMP_INIT_SYMBOL(engineBoots);
-	SNMP_INIT_SYMBOL(engineTime);
-	SNMP_INIT_SYMBOL(securityAuthProto);
-	SNMP_INIT_SYMBOL(securityAuthKey);
-	SNMP_INIT_SYMBOL(securityAuthLocalKey);
-	SNMP_INIT_SYMBOL(securityPrivProto);
-	SNMP_INIT_SYMBOL(securityPrivKey);
-	SNMP_INIT_SYMBOL(securityPrivLocalKey);
-	SNMP_INIT_SYMBOL(securityModel);
-	SNMP_INIT_SYMBOL(securityLevel);
-	SNMP_INIT_SYMBOL(paramName);
+    SNMP_INIT_SYMBOL(isAuthoritative);
+    SNMP_INIT_SYMBOL(engineBoots);
+    SNMP_INIT_SYMBOL(engineTime);
+    SNMP_INIT_SYMBOL(securityAuthProto);
+    SNMP_INIT_SYMBOL(securityAuthKey);
+    SNMP_INIT_SYMBOL(securityAuthLocalKey);
+    SNMP_INIT_SYMBOL(securityPrivProto);
+    SNMP_INIT_SYMBOL(securityPrivKey);
+    SNMP_INIT_SYMBOL(securityPrivLocalKey);
+    SNMP_INIT_SYMBOL(securityModel);
+    SNMP_INIT_SYMBOL(securityLevel);
+    SNMP_INIT_SYMBOL(paramName);
 
+    SNMP_INIT_SYMBOL(socket);
+    SNMP_INIT_SYMBOL(tv_sec);
+    SNMP_INIT_SYMBOL(tv_usec);
 
     v8::Local<v8::Object> constants = v8::Object::New();
 
