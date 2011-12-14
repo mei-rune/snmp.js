@@ -25,7 +25,6 @@
 #include "pdu.cpp"
 #include "session.cpp"
 
-
 static v8::Handle<v8::Value> ParseOid(const v8::Arguments& args) {
     v8::HandleScope scope;
 
@@ -109,6 +108,14 @@ SNMP_DEFINE_SYMBOL(socket);
 SNMP_DEFINE_SYMBOL(tv_sec);
 SNMP_DEFINE_SYMBOL(tv_usec);
 
+SNMP_DEFINE_SYMBOL(require);
+SNMP_DEFINE_SYMBOL(dgram);
+SNMP_DEFINE_SYMBOL(udp4);
+SNMP_DEFINE_SYMBOL(udp6);
+SNMP_DEFINE_SYMBOL(createSocket);
+SNMP_DEFINE_SYMBOL(bind);
+
+
 // --- Entry point ---
 #ifdef _MSC_VER
 extern "C" __declspec (dllexport)
@@ -186,6 +193,13 @@ void init(v8::Handle<v8::Object> target) {
     SNMP_INIT_SYMBOL(socket);
     SNMP_INIT_SYMBOL(tv_sec);
     SNMP_INIT_SYMBOL(tv_usec);
+
+	SNMP_INIT_SYMBOL(require);
+	SNMP_INIT_SYMBOL(dgram);
+	SNMP_INIT_SYMBOL(udp4);
+	SNMP_INIT_SYMBOL(udp6);
+	SNMP_INIT_SYMBOL(createSocket);
+	SNMP_INIT_SYMBOL(bind);
 
     v8::Local<v8::Object> constants = v8::Object::New();
 
