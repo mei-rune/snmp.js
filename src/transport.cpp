@@ -22,6 +22,7 @@
  */
 
 #include "snmp.h"
+#include "stream_adapter.h"
 
 
 
@@ -33,76 +34,70 @@ static netsnmp_tdomain mei6Domain;
 oid             mei6Domain_oid[] = { 1, 3, 6, 1, 6, 1, 113 };
 
 
-void* stream_create(struct sockaddr_storage* addr, int local);
-netsnmp_transport* stream_get_transport(void*);
-
 
 
 void init4(netsnmp_transport* t, struct sockaddr_in* addr) {
-	t->local = (u_char *) malloc(6);
-	memcpy(t->local, (u_char *) & (addr->sin_addr.s_addr), 4);
-	t->local[4] = (htons(addr->sin_port) & 0xff00) >> 8;
-	t->local[5] = (htons(addr->sin_port) & 0x00ff) >> 0;
-	t->local_length = 6;
+    t->local = (u_char *) malloc(6);
+    memcpy(t->local, (u_char *) & (addr->sin_addr.s_addr), 4);
+    t->local[4] = (htons(addr->sin_port) & 0xff00) >> 8;
+    t->local[5] = (htons(addr->sin_port) & 0x00ff) >> 0;
+    t->local_length = 6;
 
-	t->remote = (u_char *)malloc(6);
-	memcpy(t->remote, (u_char *) & (addr->sin_addr.s_addr), 4);
-	t->remote[4] = (htons(addr->sin_port) & 0xff00) >> 8;
-	t->remote[5] = (htons(addr->sin_port) & 0x00ff) >> 0;
-	t->remote_length = 6;
+    t->remote = (u_char *)malloc(6);
+    memcpy(t->remote, (u_char *) & (addr->sin_addr.s_addr), 4);
+    t->remote[4] = (htons(addr->sin_port) & 0xff00) >> 8;
+    t->remote[5] = (htons(addr->sin_port) & 0x00ff) >> 0;
+    t->remote_length = 6;
 
-	t->data = malloc(sizeof(netsnmp_indexed_addr_pair));
-	memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
-	memcpy(t->data, addr, sizeof(struct sockaddr_in));
-	t->data_length = sizeof(netsnmp_indexed_addr_pair);
+    t->data = malloc(sizeof(netsnmp_indexed_addr_pair));
+    memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
+    memcpy(t->data, addr, sizeof(struct sockaddr_in));
+    t->data_length = sizeof(netsnmp_indexed_addr_pair);
 }
 
 void init6(netsnmp_transport* t, struct sockaddr_in6* addr) {
 
-	t->local = (unsigned char*)malloc(18);
-	memcpy(t->local, addr->sin6_addr.s6_addr, 16);
-	t->local[16] = (addr->sin6_port & 0xff00) >> 8;
-	t->local[17] = (addr->sin6_port & 0x00ff) >> 0;
-	t->local_length = 18;
+    t->local = (unsigned char*)malloc(18);
+    memcpy(t->local, addr->sin6_addr.s6_addr, 16);
+    t->local[16] = (addr->sin6_port & 0xff00) >> 8;
+    t->local[17] = (addr->sin6_port & 0x00ff) >> 0;
+    t->local_length = 18;
 
 
-	t->remote = (unsigned char*)malloc(18);
-	memcpy(t->remote, addr->sin6_addr.s6_addr, 16);
-	t->remote[16] = (addr->sin6_port & 0xff00) >> 8;
-	t->remote[17] = (addr->sin6_port & 0x00ff) >> 0;
-	t->remote_length = 18;
+    t->remote = (unsigned char*)malloc(18);
+    memcpy(t->remote, addr->sin6_addr.s6_addr, 16);
+    t->remote[16] = (addr->sin6_port & 0xff00) >> 8;
+    t->remote[17] = (addr->sin6_port & 0x00ff) >> 0;
+    t->remote_length = 18;
 
-	t->data = malloc(sizeof(netsnmp_indexed_addr_pair));
-	memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
-	memcpy(t->data, addr, sizeof(struct sockaddr_in6));
-	t->data_length = sizeof(netsnmp_indexed_addr_pair);
+    t->data = malloc(sizeof(netsnmp_indexed_addr_pair));
+    memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
+    memcpy(t->data, addr, sizeof(struct sockaddr_in6));
+    t->data_length = sizeof(netsnmp_indexed_addr_pair);
 }
 
 netsnmp_transport *mei_udp_transport(netsnmp_tdomain* domain, struct sockaddr_storage* addr, int local) {
-	
-	void* stream = NULL;
-    netsnmp_transport *t = NULL;
-	stream = stream_create(addr, local);
-	if(NULL == stream) {
-		return NULL;
-	}
+    Stream* stream = new Stream();
+    if(NULL == stream) {
+        return NULL;
+    }
 
-    t = stream_get_transport(stream);
+    netsnmp_transport *t = stream->transport();
 
     /*
      * Set Domain
      */
     t->domain = domain->name;
-	t->domain_length = domain->name_length;
-	
-	if(AF_INET == addr->ss_family) {
-		init4(t, (struct sockaddr_in*)addr);
-	} else {
-		init6(t, (struct sockaddr_in6*)addr);
-	}
+    t->domain_length = domain->name_length;
+
+    if(AF_INET == addr->ss_family) {
+        init4(t, (struct sockaddr_in*)addr);
+    } else {
+        init6(t, (struct sockaddr_in6*)addr);
+    }
 
     /*
-     * 16-bit length field, 8 byte UDP header, 20 byte IPv4 header  
+     * 16-bit length field, 8 byte UDP header, 20 byte IPv4 header
      */
 
     t->msgMaxSize = 0xffff - 8 - 20;
@@ -112,8 +107,7 @@ netsnmp_transport *mei_udp_transport(netsnmp_tdomain* domain, struct sockaddr_st
 
 
 netsnmp_transport * mei_udp_create_tstring(const char *str, int local,
-			   const char *default_target)
-{
+        const char *default_target) {
     struct sockaddr_in addr;
 
     if (netsnmp_sockaddr_in2(&addr, str, default_target)) {
@@ -124,8 +118,7 @@ netsnmp_transport * mei_udp_create_tstring(const char *str, int local,
 }
 
 
-netsnmp_transport * mei_udp_create_ostring(const u_char * o, size_t o_len, int local)
-{
+netsnmp_transport * mei_udp_create_ostring(const u_char * o, size_t o_len, int local) {
     struct sockaddr_in addr;
 
     if (o_len == 6) {
@@ -139,8 +132,7 @@ netsnmp_transport * mei_udp_create_ostring(const u_char * o, size_t o_len, int l
 }
 
 
-void transport_udp_ctor(void)
-{
+void transport_udp_ctor(void) {
     meiDomain.name = meiDomain_oid;
     meiDomain.name_length = sizeof(meiDomain_oid)/sizeof(oid);
     meiDomain.prefix = (const char**)calloc(2, sizeof(char *));
@@ -155,7 +147,7 @@ void transport_udp_ctor(void)
 
 
 netsnmp_transport * mei_udp6_create_tstring(const char *str, int local,
-			    const char *default_target) {
+        const char *default_target) {
     struct sockaddr_in6 addr;
 
     if (netsnmp_sockaddr_in6_2(&addr, str, default_target)) {
@@ -178,8 +170,7 @@ netsnmp_transport* mei_udp6_create_ostring(const u_char * o, size_t o_len, int l
     return NULL;
 }
 
-void transport_udp6_ctor(void)
-{
+void transport_udp6_ctor(void) {
     meiDomain.name = mei6Domain_oid;
     meiDomain.name_length = sizeof(mei6Domain_oid)/sizeof(oid);
     meiDomain.prefix = (const char**)calloc(2, sizeof(char *));

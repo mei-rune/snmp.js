@@ -27,7 +27,12 @@
       'sources': [
         'src/binding.cpp',
         'src/session.cpp',
+        'src/session.h',
         'src/pdu.cpp',
+        'src/pdu.h',
+        'src/transport.cpp',
+        'src/stream_adapter.cpp',
+        'src/stream_adapter.h',
         'src/snmp.h',
         'lib/index.js',
         'lib/pdu.js',
@@ -106,11 +111,45 @@
         ],
       ],
     },
+	
+    {
+      'target_name': 'copy-to-lib',
+      'type': 'none',
+      'dependencies': [ 'snmp' ],
+      'toolsets': ['host'],
+      'variables': { },
+
+      'sources': [
+             'test/require.test.js',
+      ],
+	  
+      'actions': [
+        {
+          'action_name': 'expresso',
+
+          'inputs': [
+             'test/require.test.js',
+          ],
+
+		  
+          'outputs': [
+            '$(OutDir)/test.result',
+          ],
+
+          'action':  [
+              'copy',
+              '/Y',
+              '$(ProjectDir)$(Configuration)\snmp.dll',
+              '$(ProjectDir)lib\snmp.node',
+		   ],
+        },
+	    ] # actions
+    }, # copy-to-lib
 
     {
       'target_name': 'run-tests',
       'type': 'none',
-      'dependencies': [ 'snmp' ],
+      'dependencies': [ 'copy-to-lib' ],
       'toolsets': ['host'],
       'variables': { },
 

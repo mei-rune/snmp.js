@@ -42,6 +42,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdexcept>
+#include <memory>
 
 #include <v8.h>
 #include <node.h>
