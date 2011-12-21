@@ -48,7 +48,7 @@ Stream::Stream() {
     t_.base_transport = NULL;
     t_.identifier = NULL;
 
-    t_.sock       = 0;
+    t_.sock       = STREAM_SOCKET;
 }
 
 //bool Stream::init(struct sockaddr_storage* addr, int local) {
@@ -107,15 +107,15 @@ int Stream::Recv(netsnmp_transport* t, void *buf, int size,
     memset(addr_pair, 0, sizeof(netsnmp_indexed_addr_pair));
     from = &addr_pair->remote_addr.sa;
 
-    int rc = recvfrom(t->sock, (char*)buf, size, NETSNMP_DONTWAIT, from, &fromlen);
-    if (rc < 0) {
+    session->on_recv(stream, buf, &size, from, &fromlen);
+    if (size < 0) {
         DEBUGMSGTL(("netsnmp_udp", "recvfrom fd %d err %d (\"%s\")\n",
                     t->sock, errno, strerror(errno)));
     }
 
     *opaque = (void *)addr_pair;
     *olength = sizeof(netsnmp_indexed_addr_pair);
-    return rc;
+    return size;
 }
 
 int Stream::Send(netsnmp_transport *t, void *buf, int size, void **opaque, int *olength) {
@@ -125,35 +125,19 @@ int Stream::Send(netsnmp_transport *t, void *buf, int size, void **opaque, int *
     // TODO
     int rc = -1;
     netsnmp_indexed_addr_pair *addr_pair = NULL;
-    struct sockaddr *to = NULL;
 
     if (opaque != NULL && *opaque != NULL &&
             ((*olength == sizeof(netsnmp_indexed_addr_pair) ||
-              (*olength == sizeof(struct sockaddr_in))))) {
-
+              (*olength >= sizeof(struct sockaddr_in))))) {
         addr_pair = (netsnmp_indexed_addr_pair *) (*opaque);
-    } else if (t != NULL && t->data != NULL &&
+    } else if (t->data != NULL &&
                t->data_length == sizeof(netsnmp_indexed_addr_pair)) {
         addr_pair = (netsnmp_indexed_addr_pair *) (t->data);
     }
 
-    to = &addr_pair->remote_addr.sa;
 
-    if (to != NULL && t != NULL && t->sock >= 0) {
-        char *str = netsnmp_udp_fmtaddr(NULL, (void *) addr_pair,
-                                        sizeof(netsnmp_indexed_addr_pair));
-        DEBUGMSGTL(("netsnmp_udp", "send %d bytes from %p to %s on fd %d\n",
-                    size, buf, str, t->sock));
-        free(str);
-        while (rc < 0) {
-            //rc = sendto(t->sock, buf, size, 0, to, sizeof(struct sockaddr));
-            if (rc < 0 && errno != EINTR) {
-                DEBUGMSGTL(("netsnmp_udp", "sendto error, rc %d (errno %d)\n",
-                            rc, errno));
-                break;
-            }
-        }
-    }
+    session->on_send(stream, buf, size, &addr_pair->remote_addr.sa, sizeof(struct sockaddr));
+
     return rc;
 }
 

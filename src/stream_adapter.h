@@ -26,6 +26,8 @@
 
 #include "snmp.h"
 
+#define STREAM_SOCKET   2345
+
 class Stream {
 private:
     netsnmp_transport t_;

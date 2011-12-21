@@ -26,10 +26,58 @@
 #include "pdu.h"
 #include "stream_adapter.h"
 
+
 class Session : node::ObjectWrap {
+public:
+
+    class SwapScope {
+    public:
+        SwapScope(Session* session, const v8::Arguments& args)
+            : session_(session)
+            , exception_(v8::Undefined())
+            , args(args) {
+            session_->swap_ = this;
+        }
+
+        ~SwapScope() {
+            session_->swap_ = NULL;
+        }
+
+        v8::Handle<v8::Value> Close(v8::Handle<v8::Value> value) {
+            if(exception_->IsUndefined()) {
+                return scope.Close(value);
+            }
+            return exception_;
+        }
+
+        void error(const char* msg) {
+            exception_ = ThrowError(msg);
+        }
+
+        bool hasException() {
+            return !exception_->IsUndefined();
+        }
+
+        v8::Handle<v8::Value> getException() {
+            return exception_;
+        }
+
+        v8::HandleScope scope;
+        v8::Handle<v8::Object> thisObject;
+
+        const v8::Arguments& args;
+    private:
+        Session* session_;
+        v8::Handle<v8::Value> exception_;
+        SwapScope(SwapScope& scope);
+        SwapScope& operator=(SwapScope& scope);
+    };
+
 private:
+
     netsnmp_session arguments_;
     void* session_;
+    SwapScope* swap_;
 
     Session() : session_(0) {
         snmp_sess_init(&arguments_);
@@ -55,15 +103,63 @@ public:
     }
 
     void on_open(Stream* stream) {
-        // TODO
+        netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*)stream->transport()->data;
+
+        v8::Handle<v8::Value> argv[] = {
+            (AF_INET == pair->local_addr.sa.sa_family)?udp4_symbol:udp6_symbol
+            , from_uint16(ntohs((AF_INET == pair->local_addr.sa.sa_family)?pair->local_addr.sin.sin_port:pair->local_addr.sin6.sin6_port))
+        };
+
+        node::MakeCallback(swap_->thisObject, "on_open", 2, argv);
     }
 
     void on_close(Stream* stream) {
-        // TODO
+        v8::Handle<v8::Value> argv[] = { v8::Undefined() };
+        node::MakeCallback(swap_->thisObject, "on_close", 0, argv);
     }
 
-    void on_send(Stream* stream) {
-        // TODO
+    void on_send(Stream* stream, const void *buf, int size,
+                 struct sockaddr *to, socklen_t to_len) {
+        char dst[50];
+        const char *to_addr = inet_ntop(to->sa_family, (AF_INET == to->sa_family)?(void*)&((struct sockaddr_in*)to)->sin_addr:(void*)&((struct sockaddr_in6*)to)->sin6_addr, dst, 50);
+        v8::Handle<v8::Value> argv[] = {
+            from_ustring((const unsigned char*)buf, size)
+            , from_uint16((AF_INET == to->sa_family)?((struct sockaddr_in*)to)->sin_port:((struct sockaddr_in6*)to)->sin6_port)
+            , from_string(to_addr, strlen(to_addr))
+        };
+
+        v8::Handle<node::Buffer> outgoing;
+        node::MakeCallback(swap_->thisObject, "on_send", 3, argv);
+    }
+
+    void on_recv(Stream* stream, void *buf, int *size,
+                 struct sockaddr *from, socklen_t *from_len) {
+        netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*)stream->transport()->data;
+        v8::Handle<v8::Value> msg = swap_->args[0];
+        v8::Handle<v8::Object> rinfo = swap_->args[1]->ToObject();
+        v8::String::Utf8Value u8(rinfo->Get(address_symbol));
+
+        *from_len = inet_pton(pair->local_addr.sa.sa_family, *u8, from);
+
+        if(msg->IsObject() && node::Buffer::HasInstance(msg->ToObject())) {
+            UNWRAP(node::Buffer, buffer, msg->ToObject());
+            if(node::Buffer::Length(buffer) > *size) {
+                *size = 0;
+                swap_->error("msg length too big.");
+                return ;
+            }
+            *size = node::Buffer::Length(buffer);
+            memcpy(buf, node::Buffer::Data(buffer), *size);
+        } else {
+            v8::String::Utf8Value u8(msg->ToString());
+            if(u8.length() > *size) {
+                *size = 0;
+                swap_->error("msg length too big.");
+                return ;
+            }
+            *size = u8.length();
+            memcpy(buf, *u8, *size);
+        }
     }
 
     static Session* ToSession(void* session);

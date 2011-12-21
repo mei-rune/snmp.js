@@ -245,21 +245,21 @@ v8::Handle<v8::Value> Session::readData(const v8::Arguments& args) {
     return v8::Undefined();
 }
 
-v8::Handle<v8::Value> Session::selectInfo(const v8::Arguments& args) {
+v8::Handle<v8::Value> Session::onData(const v8::Arguments& args) {
 
     fd_set fdset;
     struct timeval timeout;
     int block = 1;
     int numfds = 0;
 
-    v8::HandleScope scope;
     UNWRAP(Session, wrap, args.This());
+    SwapScope scope(wrap, args);
     if(0 != wrap->session_) {
         return ThrowError("Session hasn't opened.");
     }
 
-    if(0 != args.Length()) {
-        return ThrowError("Must not pass any arguments to readData.");
+    if(2 != args.Length()) {
+        return ThrowError("Must not pass the msg and rinfo arguments to onData.");
     }
 
     FD_ZERO(&fdset);
@@ -275,38 +275,21 @@ v8::Handle<v8::Value> Session::selectInfo(const v8::Arguments& args) {
         return v8::Undefined();
     }
 
-    v8::Handle<v8::Object> ret = v8::Object::New();
-    // NOTICE: this is hack.
-    ret->Set(socket_symbol, from_int32(numfds-1));
-
-    if(0 == block) {
-        v8::Handle<v8::Object> timeout_v8 = v8::Object::New();
-        timeout_v8->Set(tv_sec_symbol,  from_long(timeout.tv_sec));
-        timeout_v8->Set(tv_usec_symbol, from_long(timeout.tv_usec));
-        ret->Set(timeout_symbol, timeout_v8);
-    }
-
-    return scope.Close(ret);
-}
-
-v8::Handle<v8::Value> Session::onData(const v8::Arguments& args) {
-
-    fd_set fdset;
-    v8::HandleScope scope;
-    UNWRAP(Session, wrap, args.This());
-    if(0 != wrap->session_) {
-        return ThrowError("Session hasn't opened.");
-    }
-
-    if(0 != args.Length()) {
-        return ThrowError("Must not pass any arguments to onData.");
-    }
-    FD_ZERO(&fdset);
 
     if(-1 == snmp_sess_read(wrap->session_, &fdset)) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
-    return v8::Undefined();
+
+    if(0 == block) {
+        v8::Handle<v8::Object> ret = v8::Object::New();
+        v8::Handle<v8::Object> timeout_v8 = v8::Object::New();
+        timeout_v8->Set(tv_sec_symbol,  from_long(timeout.tv_sec));
+        timeout_v8->Set(tv_usec_symbol, from_long(timeout.tv_usec));
+        ret->Set(timeout_symbol, timeout_v8);
+        return scope.Close(ret);
+    } else {
+        return v8::Undefined();
+    }
 }
 
 v8::Handle<v8::Value> Session::Close(const v8::Arguments& args) {

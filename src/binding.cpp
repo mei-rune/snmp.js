@@ -106,7 +106,8 @@ SNMP_DEFINE_SYMBOL(paramName);
 
 SNMP_DEFINE_SYMBOL(socket);
 SNMP_DEFINE_SYMBOL(tv_sec);
-SNMP_DEFINE_SYMBOL(tv_usec);
+SNMP_DEFINE_SYMBOL(tv_usec)
+SNMP_DEFINE_SYMBOL(address);
 
 SNMP_DEFINE_SYMBOL(require);
 SNMP_DEFINE_SYMBOL(dgram);
@@ -193,6 +194,7 @@ void init(v8::Handle<v8::Object> target) {
     SNMP_INIT_SYMBOL(socket);
     SNMP_INIT_SYMBOL(tv_sec);
     SNMP_INIT_SYMBOL(tv_usec);
+    SNMP_INIT_SYMBOL(address);
 
     SNMP_INIT_SYMBOL(require);
     SNMP_INIT_SYMBOL(dgram);

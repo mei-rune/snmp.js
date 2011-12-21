@@ -25,14 +25,15 @@
 #define _snmp_js_h  1
 
 
-#ifndef _WIN32_WINNT
-# define _WIN32_WINNT   0x0502
-#endif
 
 
 #include <SDKDDKVer.h>
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT   _WIN32_WINNT_VISTA
+#endif
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <Ws2tcpip.h>
 #include <net-snmp/net-snmp-config.h>
 
 
@@ -708,6 +709,7 @@ SNMP_DECLARE_SYMBOL(paramName);
 SNMP_DECLARE_SYMBOL(socket);
 SNMP_DECLARE_SYMBOL(tv_sec);
 SNMP_DECLARE_SYMBOL(tv_usec);
+SNMP_DECLARE_SYMBOL(address);
 
 SNMP_DECLARE_SYMBOL(require);
 SNMP_DECLARE_SYMBOL(dgram);
