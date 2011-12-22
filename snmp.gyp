@@ -48,28 +48,21 @@
         '_LARGEFILE_SOURCE',
         '_FILE_OFFSET_BITS=64',
       ], 
-      'msvs_postbuild':
-         'copy /Y "$(ProjectDir)$(Configuration)\snmp.dll" /B "$(ProjectDir)test\node_modules\snmp.node" /B',
-
-      'postbuilds':  [
-        [ 'OS=="win"', {
-            'postbuild_name': 'copy snmp to node_modules',
-            'action': [
-              'copy',
-              '/Y',
-              '$(ProjectDir)$(Configuration)\snmp.dll',
-              '$(ProjectDir)test\node_modules\snmp.node',
+	  'msbuild_settings': {
+			'PostBuildEvent': {
+			'Command':  [
+					  'copy  /Y $(ProjectDir)$(Configuration)\\snmp.dll $(ProjectDir)lib\\snmp.node && copy /Y "$(ProjectDir)lib\\*.*" "$(ProjectDir)test\\node_modules\\snmp\\lib"',
 			      ],
-	        },{
+			}
+	  },
+      'postbuilds':  {
             'postbuild_name': 'copy snmp to node_modules',
             'action': [
               'cp',
               '$(BUILT_PRODUCTS_DIR)/$(Configuration)/snmp.dll',
               '$(BUILT_PRODUCTS_DIR)/test\node_modules/snmp.node',
             ],
-          }
-        ]
-      ],
+       },
 	  
 
       'conditions': [
@@ -113,43 +106,9 @@
     },
 	
     {
-      'target_name': 'copy-to-lib',
-      'type': 'none',
-      'dependencies': [ 'snmp' ],
-      'toolsets': ['host'],
-      'variables': { },
-
-      'sources': [
-             'test/require.test.js',
-      ],
-	  
-      'actions': [
-        {
-          'action_name': 'expresso',
-
-          'inputs': [
-             'test/require.test.js',
-          ],
-
-		  
-          'outputs': [
-            '$(OutDir)/test.result',
-          ],
-
-          'action':  [
-              'copy',
-              '/Y',
-              '$(ProjectDir)$(Configuration)\snmp.dll',
-              '$(ProjectDir)lib\snmp.node',
-		   ],
-        },
-	    ] # actions
-    }, # copy-to-lib
-
-    {
       'target_name': 'run-tests',
       'type': 'none',
-      'dependencies': [ 'copy-to-lib' ],
+      'dependencies': [ 'snmp' ],
       'toolsets': ['host'],
       'variables': { },
 

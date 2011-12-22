@@ -14,21 +14,21 @@
       'Debug': {
         'defines': [ 'DEBUG', '_DEBUG' ],
         'cflags': [ '-g', '-O0' ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
+        'msbuild_settings': {
+          'ClCompile': {
             'target_conditions': [
               ['library=="static_library"', {
-                'RuntimeLibrary': 1, # static debug
+                'RuntimeLibrary': 'MultiThreadedDebug', # static debug
               }, {
-                'RuntimeLibrary': 1, # DLL debug
+                'RuntimeLibrary': 'MultiThreadedDebug', # DLL debug
               }],
             ],
-            'Optimization': 0, # /Od, no optimization
+            'Optimization': 'Disabled', # /Od, no optimization
             'MinimalRebuild': 'true',
             'OmitFramePointers': 'false',
-            'BasicRuntimeChecks': 3, # /RTC1
+            'BasicRuntimeChecks': 'EnableFastChecks', # /RTC1
           },
-          'VCLinkerTool': {
+          'Link': {
             'LinkIncremental': 2, # enable incremental linking
           },
         },
@@ -36,18 +36,18 @@
       'Release': {
         'defines': [ 'NDEBUG' ],
         'cflags': [ '-O3', '-fomit-frame-pointer', '-fdata-sections', '-ffunction-sections' ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
+        'msbuild_settings': {
+          'ClCompile': {
             'target_conditions': [
               ['library=="static_library"', {
-                'RuntimeLibrary': 0, # static release
+                'RuntimeLibrary': 'MultiThreaded', # static release
               }, {
-                'RuntimeLibrary': 0, # debug release
+                'RuntimeLibrary': 'MultiThreaded', # debug release
               }],
             ],
-            'Optimization': 3, # /Ox, full optimization
-            'FavorSizeOrSpeed': 1, # /Ot, favour speed over size
-            'InlineFunctionExpansion': 2, # /Ob2, inline anything eligible
+            'Optimization': 'Full', # /Ox, full optimization
+            'FavorSizeOrSpeed': 'Speed', # /Ot, favour speed over size
+            'InlineFunctionExpansion': 'AnySuitable', # /Ob2, inline anything eligible
             'WholeProgramOptimization': 'true', # /GL, whole program optimization, needed for LTCG
             'OmitFramePointers': 'true',
             'EnableFunctionLevelLinking': 'true',
@@ -56,41 +56,41 @@
               '/MP', # compile across multiple CPUs
             ],
           },
-          'VCLibrarianTool': {
+          'Lib': {
             'AdditionalOptions': [
               '/LTCG', # link time code generation
             ],
           },
-          'VCLinkerTool': {
-            'LinkTimeCodeGeneration': 1, # link-time code generation
-            'OptimizeReferences': 2, # /OPT:REF
-            'EnableCOMDATFolding': 2, # /OPT:ICF
+          'Link': {
+            'LinkTimeCodeGeneration': 'UseLinkTimeCodeGeneration', # link-time code generation
+            'OptimizeReferences': 'true', # /OPT:REF
+            'EnableCOMDATFolding': 'true', # /OPT:ICF
             'LinkIncremental': 1, # disable incremental linking
           },
         },
       }
     },
-    'msvs_settings': {
-      'VCCLCompilerTool': {
+    'msbuild_settings': {
+      'ClCompile': {
         'StringPooling': 'true', # pool string literals
-        'DebugInformationFormat': 3, # Generate a PDB
-        'WarningLevel': 3,
+        'DebugInformationFormat': 'EditAndContinue', # Generate a PDB
+        'WarningLevel': 'Level3',
         'BufferSecurityCheck': 'true',
-        'ExceptionHandling': 1, # /EHsc
+        'ExceptionHandling': 'Sync', # /EHsc
         'SuppressStartupBanner': 'true',
         'WarnAsError': 'false',
       },
-      'VCLibrarianTool': {
+      'Lib': {
       },
-      'VCLinkerTool': {
+      'Link': {
         'GenerateDebugInformation': 'true',
-        'RandomizedBaseAddress': 2, # enable ASLR
-        'DataExecutionPrevention': 2, # enable DEP
+        'RandomizedBaseAddress': 'true', # enable ASLR
+        'DataExecutionPrevention': 'true', # enable DEP
         'AllowIsolation': 'true',
         'SuppressStartupBanner': 'true',
         'target_conditions': [
           ['_type=="executable"', {
-            'SubSystem': 1, # console executable
+            'SubSystem': 'Console', # console executable
           }],
         ],
       },
