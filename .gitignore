@@ -40,3 +40,6 @@ test/node_modules
 format_code.bat
 
 *.orig
+
+
+tools/gyp

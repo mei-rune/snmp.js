@@ -7,7 +7,7 @@ import sys
 script_dir = os.path.dirname(__file__)
 snmp_root = os.path.normpath(script_dir)
 
-sys.path.insert(0, os.path.join(snmp_root, 'build', 'gyp', 'pylib'))
+sys.path.insert(0, os.path.join(snmp_root, 'tools', 'gyp', 'pylib'))
 import gyp
 
 # Directory within which we want all generated files (including Makefiles)

@@ -135,7 +135,7 @@
 
           'action': [
             '$(ProjectDir)deps/node/$(Configuration)/node.exe',
-            '$(ProjectDir)build/node_modules/expresso/bin/expresso',
+            '$(ProjectDir)tools/node_modules/expresso/bin/expresso',
             '$(FullPath)',
           ],
         },

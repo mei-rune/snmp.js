@@ -120,7 +120,7 @@ copy /Y "%config%\snmp.dll" "lib\snmp.node"
 copy /Y "lib\*.*" "test\node_modules\snmp\lib\"
 copy /Y "package.json" "test\node_modules\snmp\package.json"
 copy /Y "index.js" "test\node_modules\snmp\index.js"
-"deps/node/%config%/node.exe" build/node_modules/expresso/bin/expresso %test_args%
+"deps/node/%config%/node.exe" tools/node_modules/expresso/bin/expresso %test_args%
 goto exit
 
 :create-msvs-files-failed

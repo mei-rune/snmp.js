@@ -29,7 +29,6 @@
             'BasicRuntimeChecks': 'EnableFastChecks', # /RTC1
           },
           'Link': {
-            'LinkIncremental': 2, # enable incremental linking
           },
         },
       },
@@ -65,7 +64,6 @@
             'LinkTimeCodeGeneration': 'UseLinkTimeCodeGeneration', # link-time code generation
             'OptimizeReferences': 'true', # /OPT:REF
             'EnableCOMDATFolding': 'true', # /OPT:ICF
-            'LinkIncremental': 1, # disable incremental linking
           },
         },
       }
