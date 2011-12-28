@@ -35,7 +35,8 @@ public:
         SwapScope(Session* session, const v8::Arguments& args)
             : session_(session)
             , exception_(v8::Undefined())
-            , args(args) {
+            , args(args)
+			, thisObject(args.This()){
             session_->swap_ = this;
         }
 
@@ -50,9 +51,25 @@ public:
             return exception_;
         }
 
-        void error(const char* msg) {
-            exception_ = ThrowError(msg);
+        void error(const char* fmt, ...) {
+			char buf[1024];
+			va_list args;
+			va_start(args, fmt);
+
+#ifdef _MSC_VER
+			_vsnprintf(
+#else
+			vsnprintf(
+#endif
+				buf, 1024, fmt, args);
+
+            exception_ = ThrowError(buf);
+			va_end(args);
         }
+
+        void error(v8::Handle<v8::Value> e) {
+			exception_ = e;
+		}
 
         bool hasException() {
             return !exception_->IsUndefined();
@@ -79,8 +96,9 @@ private:
     void* session_;
     SwapScope* swap_;
 
-    Session() : session_(0) {
+    Session() : session_(0), swap_(0) {
         snmp_sess_init(&arguments_);
+		arguments_.myvoid = this;
     }
 
     void open() {
@@ -102,34 +120,64 @@ public:
         close();
     }
 
+	void makeCallback(v8::Handle<v8::Object> object,
+							  v8::Handle<v8::String> method,
+                              int argc,
+                              v8::Handle<v8::Value> argv[]) {
+	    v8::TryCatch try_catch;
+
+		v8::Local<v8::Value> callback = object->Get(method);
+		if (!callback->IsFunction()) {
+			v8::String::Utf8Value u8(method);
+			this->swap_->error("Object #<Session> has no method '%s'.", *u8);
+			return;
+		}
+		v8::Local<v8::Function>::Cast(callback)->Call(object, argc, argv);
+        if (try_catch.HasCaught()) {
+			this->swap_->error(try_catch.Exception());
+        }
+    }
+
     void on_open(Stream* stream) {
+        char dst[50];
+
         netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*)stream->transport()->data;
+		
+		struct sockaddr_in* in4 = &pair->local_addr.sin;
+		struct sockaddr_in6* in6 = &pair->local_addr.sin6;
+		void* addr = (AF_INET ==  pair->local_addr.sa.sa_family)?(void*)&in4->sin_addr:(void*)&in6->sin6_addr;
+        const char *to_addr = inet_ntop( pair->local_addr.sa.sa_family, addr, dst, 50);
 
         v8::Handle<v8::Value> argv[] = {
             (AF_INET == pair->local_addr.sa.sa_family)?udp4_symbol:udp6_symbol
-            , from_uint16(ntohs((AF_INET == pair->local_addr.sa.sa_family)?pair->local_addr.sin.sin_port:pair->local_addr.sin6.sin6_port))
+            , from_uint16(ntohs((AF_INET == pair->local_addr.sa.sa_family)?in4->sin_port:in6->sin6_port))
+            , from_string(to_addr, strlen(to_addr))
         };
 
-        node::MakeCallback(swap_->thisObject, "on_open", 2, argv);
+        makeCallback(swap_->thisObject, on_open_symbol, 3, argv);
     }
 
     void on_close(Stream* stream) {
         v8::Handle<v8::Value> argv[] = { v8::Undefined() };
-        node::MakeCallback(swap_->thisObject, "on_close", 0, argv);
+        makeCallback(swap_->thisObject, on_close_symbol, 0, argv);
     }
 
     void on_send(Stream* stream, const void *buf, int size,
                  struct sockaddr *to, socklen_t to_len) {
         char dst[50];
-        const char *to_addr = inet_ntop(to->sa_family, (AF_INET == to->sa_family)?(void*)&((struct sockaddr_in*)to)->sin_addr:(void*)&((struct sockaddr_in6*)to)->sin6_addr, dst, 50);
+		struct sockaddr_in* in4 = (struct sockaddr_in*)to;
+		struct sockaddr_in6* in6 = (struct sockaddr_in6*)to;
+		void* addr = (AF_INET == to->sa_family)?(void*)&in4->sin_addr:(void*)&in6->sin6_addr;
+
+        const char *to_addr = inet_ntop(to->sa_family, addr, dst, 50);
         v8::Handle<v8::Value> argv[] = {
             from_ustring((const unsigned char*)buf, size)
-            , from_uint16((AF_INET == to->sa_family)?((struct sockaddr_in*)to)->sin_port:((struct sockaddr_in6*)to)->sin6_port)
+            , from_uint16(ntohs((AF_INET == to->sa_family)?in4->sin_port:in6->sin6_port))
             , from_string(to_addr, strlen(to_addr))
         };
 
         v8::Handle<node::Buffer> outgoing;
-        node::MakeCallback(swap_->thisObject, "on_send", 3, argv);
+        makeCallback(swap_->thisObject, on_send_symbol, 3, argv);
     }
 
     void on_recv(Stream* stream, void *buf, int *size,
@@ -162,7 +210,7 @@ public:
         }
     }
 
-    static Session* ToSession(void* session);
+    static Session* ToSession(netsnmp_session* session);
 
     static void Initialize(v8::Handle<v8::Object> target);
 

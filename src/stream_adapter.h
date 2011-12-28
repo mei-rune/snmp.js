@@ -28,16 +28,21 @@
 
 #define STREAM_SOCKET   2345
 
+class Session;
+
 class Stream {
 private:
     netsnmp_transport t_;
-    snmp_session *session_;
+    Session* session_;
 public:
     Stream();
 
     netsnmp_transport* transport() {
         return &t_;
     }
+
+	
+    static void Initialize();
 
     static Stream* ToStream(netsnmp_transport *t);
 

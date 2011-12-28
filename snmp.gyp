@@ -35,7 +35,6 @@
         'src/stream_adapter.h',
         'src/snmp.h',
         'lib/index.js',
-        'lib/pdu.js',
         'index.js',
         'package.json',
         'common.gypi',
@@ -50,9 +49,7 @@
       ], 
 	  'msbuild_settings': {
 			'PostBuildEvent': {
-			'Command':  [
-					  'copy  /Y $(ProjectDir)$(Configuration)\\snmp.dll $(ProjectDir)lib\\snmp.node && copy /Y "$(ProjectDir)lib\\*.*" "$(ProjectDir)test\\node_modules\\snmp\\lib"',
-			      ],
+				'Command': 'copy  /Y $(ProjectDir)$(Configuration)\\snmp.dll $(ProjectDir)lib\\snmp.node && copy /Y "$(ProjectDir)lib\\*.*" "$(ProjectDir)test\\node_modules\\snmp\\lib"',
 			}
 	  },
       'postbuilds':  {

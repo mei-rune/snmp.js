@@ -529,8 +529,12 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
                                            , const v8::AccessorInfo& info) {      \
         v8::HandleScope scope;                                                    \
         UNWRAP(this_type, wrap, info.This());                                     \
-        return scope.Close(from_string(wrap->inner name                           \
+		if(0 == wrap->inner name) {                                               \
+			return scope.Close(from_string(wrap->inner name, 0));                 \
+		} else {                                                                  \
+			return scope.Close(from_string(wrap->inner name                       \
                                               , strlen(wrap->inner name)));       \
+		}                                                                         \
     }
 
 
@@ -717,5 +721,11 @@ SNMP_DECLARE_SYMBOL(udp4);
 SNMP_DECLARE_SYMBOL(udp6);
 SNMP_DECLARE_SYMBOL(createSocket);
 SNMP_DECLARE_SYMBOL(bind);
+
+SNMP_DECLARE_SYMBOL(on_open);
+SNMP_DECLARE_SYMBOL(on_close);
+SNMP_DECLARE_SYMBOL(on_send);
+SNMP_DECLARE_SYMBOL(on_recv);
+
 
 #endif // _snmp_js_h

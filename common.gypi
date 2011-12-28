@@ -49,8 +49,6 @@
             'InlineFunctionExpansion': 'AnySuitable', # /Ob2, inline anything eligible
             'WholeProgramOptimization': 'true', # /GL, whole program optimization, needed for LTCG
             'OmitFramePointers': 'true',
-            'EnableFunctionLevelLinking': 'true',
-            'EnableIntrinsicFunctions': 'true',
             'AdditionalOptions': [
               '/MP', # compile across multiple CPUs
             ],
@@ -76,7 +74,6 @@
         'BufferSecurityCheck': 'true',
         'ExceptionHandling': 'Sync', # /EHsc
         'SuppressStartupBanner': 'true',
-        'WarnAsError': 'false',
       },
       'Lib': {
       },

@@ -36,7 +36,7 @@ oid             mei6Domain_oid[] = { 1, 3, 6, 1, 6, 1, 113 };
 
 
 
-void init4(netsnmp_transport* t, struct sockaddr_in* addr) {
+void init4(netsnmp_transport* t, struct sockaddr_in* addr, int local_port) {
     t->local = (u_char *) malloc(6);
     memcpy(t->local, (u_char *) & (addr->sin_addr.s_addr), 4);
     t->local[4] = (htons(addr->sin_port) & 0xff00) >> 8;
@@ -49,13 +49,19 @@ void init4(netsnmp_transport* t, struct sockaddr_in* addr) {
     t->remote[5] = (htons(addr->sin_port) & 0x00ff) >> 0;
     t->remote_length = 6;
 
+	
     t->data = malloc(sizeof(netsnmp_indexed_addr_pair));
-    memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
-    memcpy(t->data, addr, sizeof(struct sockaddr_in));
     t->data_length = sizeof(netsnmp_indexed_addr_pair);
+    memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
+	
+	netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*) t->data;
+	memcpy(&pair->remote_addr, addr, sizeof(struct sockaddr_in));
+
+	pair->local_addr.sin.sin_family = addr->sin_family;
+	pair->local_addr.sin.sin_port = local_port;
 }
 
-void init6(netsnmp_transport* t, struct sockaddr_in6* addr) {
+void init6(netsnmp_transport* t, struct sockaddr_in6* addr, int local_port) {
 
     t->local = (unsigned char*)malloc(18);
     memcpy(t->local, addr->sin6_addr.s6_addr, 16);
@@ -70,10 +76,16 @@ void init6(netsnmp_transport* t, struct sockaddr_in6* addr) {
     t->remote[17] = (addr->sin6_port & 0x00ff) >> 0;
     t->remote_length = 18;
 
+
     t->data = malloc(sizeof(netsnmp_indexed_addr_pair));
-    memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
-    memcpy(t->data, addr, sizeof(struct sockaddr_in6));
     t->data_length = sizeof(netsnmp_indexed_addr_pair);
+    memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
+	
+	netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*) t->data;
+	memcpy(&pair->remote_addr, addr, sizeof(struct sockaddr_in6));
+
+	pair->local_addr.sin6.sin6_family = addr->sin6_family;
+	pair->local_addr.sin6.sin6_port = local_port;
 }
 
 netsnmp_transport *mei_udp_transport(netsnmp_tdomain* domain, struct sockaddr_storage* addr, int local) {
@@ -91,9 +103,9 @@ netsnmp_transport *mei_udp_transport(netsnmp_tdomain* domain, struct sockaddr_st
     t->domain_length = domain->name_length;
 
     if(AF_INET == addr->ss_family) {
-        init4(t, (struct sockaddr_in*)addr);
+        init4(t, (struct sockaddr_in*)addr, local);
     } else {
-        init6(t, (struct sockaddr_in6*)addr);
+        init6(t, (struct sockaddr_in6*)addr, local);
     }
 
     /*
@@ -171,14 +183,14 @@ netsnmp_transport* mei_udp6_create_ostring(const u_char * o, size_t o_len, int l
 }
 
 void transport_udp6_ctor(void) {
-    meiDomain.name = mei6Domain_oid;
-    meiDomain.name_length = sizeof(mei6Domain_oid)/sizeof(oid);
-    meiDomain.prefix = (const char**)calloc(2, sizeof(char *));
-    meiDomain.prefix[0] = "mei6";
+    mei6Domain.name = mei6Domain_oid;
+    mei6Domain.name_length = sizeof(mei6Domain_oid)/sizeof(oid);
+    mei6Domain.prefix = (const char**)calloc(2, sizeof(char *));
+    mei6Domain.prefix[0] = "mei6";
 
-    meiDomain.f_create_from_tstring     = NULL;
-    meiDomain.f_create_from_tstring_new = mei_udp6_create_tstring;
-    meiDomain.f_create_from_ostring     = mei_udp6_create_ostring;
+    mei6Domain.f_create_from_tstring     = NULL;
+    mei6Domain.f_create_from_tstring_new = mei_udp6_create_tstring;
+    mei6Domain.f_create_from_ostring     = mei_udp6_create_ostring;
 
-    netsnmp_tdomain_register(&meiDomain);
+    netsnmp_tdomain_register(&mei6Domain);
 }

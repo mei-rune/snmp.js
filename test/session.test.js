@@ -93,13 +93,31 @@ var assertBuffer = function(assert, actual, expected) {
                 session.securityPrivKey = "1234567890123456789012345678901234567890"
                 assertBuffer(assert, session.securityPrivKey, "12345678901234567890123456789012");
 
-                console.log("ok");
             },
             'test get': function (beforeExit, assert) {
                 var snmp = require('snmp');
-                var session = new snmp.Native.Session();
+                var session = snmp.createSession();
                 var r;
                 session.peername = "127.0.0.1";
+                session.openSync();
+
+                var pdu = snmp.createPdu("get");
+                pdu.community = "public";
+                //snmpget -v 2c -c public 127.0.0.1 system.sysDescr.0
+                pdu.version = snmp.SNMP_VERSION.v2c;
+                //pdu.variableBindings.add("system.sysDescr", snmp.DATA_TYPE.ASN_NULL, null);
+                pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
+
+                r = session.sendSync(pdu);
+                assert.notEqual(null, r);
+            },
+
+
+            'test async get': function (beforeExit, assert) {
+                var snmp = require('snmp');
+                var session = snmp.createSession();
+                var r;
+                session.peername = "mei:127.0.0.1:161";
                 session.open();
 
                 var pdu = snmp.createPdu("get");
@@ -109,13 +127,16 @@ var assertBuffer = function(assert, actual, expected) {
                 //pdu.variableBindings.add("system.sysDescr", snmp.DATA_TYPE.ASN_NULL, null);
                 pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
 
-                session.sendNativePdu(pdu, function(code, request, response){
-                        r = response;
+                session.send(pdu, function (code, request, response) {
+                    console.log(response);
+                    console.log("recv result");
+                    r = response;
                 });
-                session.readData();
-                assert.notEqual(null, r);
+                beforeExit(function () {
+                    console.log(r);
+                    assert.notEqual(null, r);
+                });
             }
 
 
-            
         };

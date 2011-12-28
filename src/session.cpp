@@ -65,8 +65,8 @@ public:
 
 };
 
-Session* Session::ToSession(void* s) {
-    return CONTAINING_RECORD(s,Session, session_);
+Session* Session::ToSession(netsnmp_session* s) {
+	return (Session*)s->myvoid;
 }
 
 
@@ -108,51 +108,46 @@ void Session::Initialize(v8::Handle<v8::Object> target) {
     SNMP_SET_ACCESSOR(t, securityLevel);
     SNMP_SET_ACCESSOR(t, paramName);
 
-    NODE_SET_PROTOTYPE_METHOD(t, "open", Open);
-    NODE_SET_PROTOTYPE_METHOD(t, "onData", onData);
-    NODE_SET_PROTOTYPE_METHOD(t, "readData", readData);
-    NODE_SET_PROTOTYPE_METHOD(t, "sendPdu", sendPdu);
-    NODE_SET_PROTOTYPE_METHOD(t, "sendNativePdu", sendNativePdu);
+    NODE_SET_PROTOTYPE_METHOD(t, "_open", Open);
+    NODE_SET_PROTOTYPE_METHOD(t, "_onData", onData);
+    NODE_SET_PROTOTYPE_METHOD(t, "_readData", readData);
+    NODE_SET_PROTOTYPE_METHOD(t, "_sendPdu", sendPdu);
+    NODE_SET_PROTOTYPE_METHOD(t, "_sendNativePdu", sendNativePdu);
     NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
     target->Set(Session_symbol, t->GetFunction());
 }
 
 v8::Handle<v8::Value> Session::New(const v8::Arguments& args) {
     v8::HandleScope scope;
-    if(1 < args.Length()) {
-        return ThrowError("Must pass a arguments object to constructor.");
+	
+    if(0 != args.Length()) {
+        return ThrowError("Must not pass any arguments to New().");
     }
 
     Session* session = new Session();
     session->Wrap(args.This());
-    if (args.Length() > 0) {
-        if(!args[0]->IsObject()) {
-            return ThrowTypeError("Arguments type must be an object");
-        }
-
-        v8::Handle<v8::Object> obj = args[0]->ToObject();
-        session->arguments_.version = to_int32(obj, "version", session->arguments_.version);
-    }
     return args.This();
 }
 
 v8::Handle<v8::Value> Session::Open(const v8::Arguments& args) {
-    v8::HandleScope scope;
     UNWRAP(Session, wrap, args.This());
+    SwapScope scope(wrap, args);
     if(0 != wrap->session_) {
         return ThrowError("Session already opened.");
     }
     wrap->session_ = snmp_sess_open(&wrap->arguments_);
     if(0 == wrap->session_) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
-
     }
+	if(scope.hasException()){
+		return scope.getException();
+	}
     return v8::Undefined();
 }
 
 v8::Handle<v8::Value> Session::sendNativePdu(const v8::Arguments& args) {
-    v8::HandleScope scope;
     UNWRAP(Session, wrap, args.This());
+    SwapScope scope(wrap, args);
     if(0 == wrap->session_) {
         return ThrowError("Session hasn't opened.");
     }
@@ -175,12 +170,16 @@ v8::Handle<v8::Value> Session::sendNativePdu(const v8::Arguments& args) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
     callable.release();
+	
+	if(scope.hasException()){
+		return scope.getException();
+	}
     return v8::Undefined();
 }
 
 v8::Handle<v8::Value> Session::sendPdu(const v8::Arguments& args) {
-    v8::HandleScope scope;
     UNWRAP(Session, wrap, args.This());
+    SwapScope scope(wrap, args);
     if(0 == wrap->session_) {
         return ThrowError("Session hasn't opened.");
     }
@@ -208,6 +207,10 @@ v8::Handle<v8::Value> Session::sendPdu(const v8::Arguments& args) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
     callable.release();
+	
+	if(scope.hasException()){
+		return scope.getException();
+	}
     return v8::Undefined();
 }
 
@@ -254,7 +257,7 @@ v8::Handle<v8::Value> Session::onData(const v8::Arguments& args) {
 
     UNWRAP(Session, wrap, args.This());
     SwapScope scope(wrap, args);
-    if(0 != wrap->session_) {
+    if(0 == wrap->session_) {
         return ThrowError("Session hasn't opened.");
     }
 

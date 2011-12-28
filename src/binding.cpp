@@ -117,6 +117,12 @@ SNMP_DEFINE_SYMBOL(createSocket);
 SNMP_DEFINE_SYMBOL(bind);
 
 
+
+SNMP_DEFINE_SYMBOL(on_open);
+SNMP_DEFINE_SYMBOL(on_close);
+SNMP_DEFINE_SYMBOL(on_send);
+SNMP_DEFINE_SYMBOL(on_recv);
+
 // --- Entry point ---
 #ifdef _MSC_VER
 extern "C" __declspec (dllexport)
@@ -202,6 +208,12 @@ void init(v8::Handle<v8::Object> target) {
     SNMP_INIT_SYMBOL(udp6);
     SNMP_INIT_SYMBOL(createSocket);
     SNMP_INIT_SYMBOL(bind);
+
+	
+	SNMP_INIT_SYMBOL(on_open);
+	SNMP_INIT_SYMBOL(on_close);
+	SNMP_INIT_SYMBOL(on_send);
+	SNMP_INIT_SYMBOL(on_recv);
 
     v8::Local<v8::Object> constants = v8::Object::New();
 
@@ -447,9 +459,7 @@ void init(v8::Handle<v8::Object> target) {
 
     Session::Initialize(target);
     Pdu::Initialize(target);
-
-    //session_initialize(target);
-    //pdu_initialize(target);
+	Stream::Initialize();
 
 
 }

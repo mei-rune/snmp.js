@@ -25,6 +25,8 @@
 #include "stream_adapter.h"
 #include "session.h"
 
+void transport_udp_ctor(void);
+void transport_udp6_ctor(void);
 
 #define TO_STREAM(t) CONTAINING_RECORD(t,Stream, t_);
 
@@ -81,16 +83,20 @@ Stream::Stream() {
 //	v8::Local<v8::Function>::Cast(stream->Get(bind_symbol)->ToObject())->Call(sock->ToObject(), 2, args2);
 //}
 
+void Stream::Initialize() {
+    transport_udp_ctor();
+    transport_udp6_ctor();
+}
 
 Stream* Stream::ToStream(netsnmp_transport *t) {
     return TO_STREAM(t);
 }
 
-int Stream::SetupSession(netsnmp_transport *t, snmp_session *s) {
+int Stream::SetupSession(netsnmp_transport *t, netsnmp_session *s) {
     Stream* stream = TO_STREAM(t);
     Session* session = Session::ToSession(s);
     session->on_open(stream);
-    stream->session_ = s;
+    stream->session_ = session;
     return SNMPERR_SUCCESS;
 }
 
@@ -98,7 +104,7 @@ int Stream::Recv(netsnmp_transport* t, void *buf, int size,
                  void **opaque, int *olength) {
 
     Stream* stream = TO_STREAM(t);
-    Session* session = Session::ToSession(stream->session_);
+    Session* session = stream->session_;
     // TODO
     struct sockaddr *from;
     socklen_t       fromlen = sizeof(struct sockaddr);
@@ -121,9 +127,8 @@ int Stream::Recv(netsnmp_transport* t, void *buf, int size,
 int Stream::Send(netsnmp_transport *t, void *buf, int size, void **opaque, int *olength) {
 
     Stream* stream = TO_STREAM(t);
-    Session* session = Session::ToSession(stream->session_);
-    // TODO
-    int rc = -1;
+    Session* session = stream->session_;
+
     netsnmp_indexed_addr_pair *addr_pair = NULL;
 
     if (opaque != NULL && *opaque != NULL &&
@@ -138,12 +143,12 @@ int Stream::Send(netsnmp_transport *t, void *buf, int size, void **opaque, int *
 
     session->on_send(stream, buf, size, &addr_pair->remote_addr.sa, sizeof(struct sockaddr));
 
-    return rc;
+    return 1;
 }
 
 int Stream::Close(netsnmp_transport *t) {
     Stream* stream = TO_STREAM(t);
-    Session* session = Session::ToSession(stream->session_);
+    Session* session = stream->session_;
     session->on_close(stream);
     delete stream;
     return SNMPERR_SUCCESS;

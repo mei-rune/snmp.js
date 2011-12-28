@@ -284,7 +284,6 @@ module.exports = {
 
 
         pdu.enterprise = "sfasfasf";
-        console.log("aaa");
         try {
                 newvalue = snmp.createPduFromObject(pdu);
                 newvalue.close();
