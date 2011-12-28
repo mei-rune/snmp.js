@@ -48,18 +48,40 @@ public:
 
         v8::TryCatch try_catch;
         v8::Handle<v8::Value> args[] = {
-            from_int32(code), wrap->pdu_, Pdu::fromPdu(pdu)
+            v8::Undefined(), wrap->pdu_, Pdu::fromPdu(pdu)
         };
+
+		
+		switch(code) {
+		case NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE:
+			args[0] = v8::Undefined();
+			break;
+		case NETSNMP_CALLBACK_OP_TIMED_OUT:
+			args[0] = from_string("timeout", 7);
+			break;
+		case NETSNMP_CALLBACK_OP_SEND_FAILED:
+			args[0] = from_string("send_error", 10);
+			break;
+		case NETSNMP_CALLBACK_OP_CONNECT:
+			args[0] = from_string("connect", 7);
+			break;
+		case NETSNMP_CALLBACK_OP_DISCONNECT:
+			args[0] = from_string("disconnect", 10);
+			break;
+		default:
+			args[0] = from_string("unknown", 7);
+			break;
+		}
 
         // get process from global scope.
         v8::Local<v8::Object> global = v8::Context::GetCurrent()->Global();
         v8::Local<v8::Object> process = global->Get(process_symbol)->ToObject();
 
-
         wrap->cb_->CallAsFunction(process, 3, args);
         if (try_catch.HasCaught()) {
             node::FatalException(try_catch);
         }
+		
         return 1;
     }
 
@@ -162,14 +184,15 @@ v8::Handle<v8::Value> Session::sendNativePdu(const v8::Arguments& args) {
     }
 
     UNWRAP(Pdu, pdu, args[0]->ToObject());
-
-    std::auto_ptr<Callable> callable(new Callable(cb, args[0], 0));
-
-    if(0 == snmp_sess_async_send(wrap->session_, pdu->native(),
+	
+	std::auto_ptr<netsnmp_pdu> copy(snmp_clone_pdu(pdu->native()));
+    std::auto_ptr<Callable> callable(new Callable(cb, args[0], copy.get()));
+	if(0 == snmp_sess_async_send(wrap->session_, copy.get(),
                                  Callable::OnEvent, callable.get())) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
     callable.release();
+	copy.release();
 	
 	if(scope.hasException()){
 		return scope.getException();
@@ -192,21 +215,22 @@ v8::Handle<v8::Value> Session::sendPdu(const v8::Arguments& args) {
     if (!cb->IsCallable()) {
         return ThrowError("Must pass pdu and cb arguments to sendPdu.");
     }
-
-    netsnmp_pdu* pdu = snmp_pdu_create(SNMP_MSG_GET);
-    v8::Handle<v8::Value> ret = Pdu::toPdu(args[0], pdu);
+	
+	std::auto_ptr<netsnmp_pdu> pdu(snmp_pdu_create(SNMP_MSG_GET));
+	v8::Handle<v8::Value> ret = Pdu::toPdu(args[0], pdu.get());
     if(!ret->IsUndefined()) {
         return ret;
     }
 
 
-    std::auto_ptr<Callable> callable(new Callable(cb, args[0], pdu));
+    std::auto_ptr<Callable> callable(new Callable(cb, args[0], pdu.get()));
 
-    if(0 != snmp_sess_async_send(wrap->session_, pdu,
+    if(0 != snmp_sess_async_send(wrap->session_, pdu.get(),
                                  Callable::OnEvent, callable.get())) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
     callable.release();
+	pdu.release();
 	
 	if(scope.hasException()){
 		return scope.getException();

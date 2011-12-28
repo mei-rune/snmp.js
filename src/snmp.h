@@ -368,7 +368,7 @@ inline oid* to_oid(v8::Handle<v8::Value>& s, oid* out, size_t* len) {
     }
 }
 
-#define UNWRAP(type, wrap, ref) type* wrap = ObjectWrap::Unwrap<type>(ref)
+#define UNWRAP(type, wrap, ref) type* wrap = node::ObjectWrap::Unwrap<type>(ref)
 
 
 #define SNMP_DEFINE_CONSTANT_VALUE(target, constant_name, constant_value)         \

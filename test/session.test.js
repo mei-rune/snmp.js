@@ -113,6 +113,29 @@ var assertBuffer = function(assert, actual, expected) {
             },
 
 
+            'test get error': function (beforeExit, assert) {
+                var snmp = require('snmp');
+                var session = snmp.createSession();
+                var r;
+                session.peername = "127.0.0.1:162";
+                session.openSync();
+
+                var pdu = snmp.createPdu("get");
+                pdu.community = "public";
+                //snmpget -v 2c -c public 127.0.0.1 system.sysDescr.0
+                pdu.version = snmp.SNMP_VERSION.v2c;
+                //pdu.variableBindings.add("system.sysDescr", snmp.DATA_TYPE.ASN_NULL, null);
+                pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
+
+                try {
+                    r = session.sendSync(pdu);
+                    assert.fail();
+                } catch (e) {
+                    console.log("get error:" + e);
+                }
+
+            },
+
             'test async get': function (beforeExit, assert) {
                 var snmp = require('snmp');
                 var session = snmp.createSession();
@@ -127,7 +150,7 @@ var assertBuffer = function(assert, actual, expected) {
                 //pdu.variableBindings.add("system.sysDescr", snmp.DATA_TYPE.ASN_NULL, null);
                 pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
 
-                session.send(pdu, function (code, request, response) {
+                session.send(pdu, function (err, request, response) {
                     console.log(response);
                     console.log("recv result");
                     r = response;
