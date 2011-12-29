@@ -51,27 +51,27 @@ public:
             v8::Undefined(), wrap->pdu_, Pdu::fromPdu(pdu)
         };
 
-		
-		switch(code) {
-		case NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE:
-			args[0] = v8::Undefined();
-			break;
-		case NETSNMP_CALLBACK_OP_TIMED_OUT:
-			args[0] = from_string("timeout", 7);
-			break;
-		case NETSNMP_CALLBACK_OP_SEND_FAILED:
-			args[0] = from_string("send_error", 10);
-			break;
-		case NETSNMP_CALLBACK_OP_CONNECT:
-			args[0] = from_string("connect", 7);
-			break;
-		case NETSNMP_CALLBACK_OP_DISCONNECT:
-			args[0] = from_string("disconnect", 10);
-			break;
-		default:
-			args[0] = from_string("unknown", 7);
-			break;
-		}
+
+        switch(code) {
+        case NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE:
+            args[0] = v8::Undefined();
+            break;
+        case NETSNMP_CALLBACK_OP_TIMED_OUT:
+            args[0] = from_string("timeout", 7);
+            break;
+        case NETSNMP_CALLBACK_OP_SEND_FAILED:
+            args[0] = from_string("send_error", 10);
+            break;
+        case NETSNMP_CALLBACK_OP_CONNECT:
+            args[0] = from_string("connect", 7);
+            break;
+        case NETSNMP_CALLBACK_OP_DISCONNECT:
+            args[0] = from_string("disconnect", 10);
+            break;
+        default:
+            args[0] = from_string("unknown", 7);
+            break;
+        }
 
         // get process from global scope.
         v8::Local<v8::Object> global = v8::Context::GetCurrent()->Global();
@@ -81,14 +81,14 @@ public:
         if (try_catch.HasCaught()) {
             node::FatalException(try_catch);
         }
-		
+
         return 1;
     }
 
 };
 
 Session* Session::ToSession(netsnmp_session* s) {
-	return (Session*)s->myvoid;
+    return (Session*)s->myvoid;
 }
 
 
@@ -135,13 +135,13 @@ void Session::Initialize(v8::Handle<v8::Object> target) {
     NODE_SET_PROTOTYPE_METHOD(t, "_readData", readData);
     NODE_SET_PROTOTYPE_METHOD(t, "_sendPdu", sendPdu);
     NODE_SET_PROTOTYPE_METHOD(t, "_sendNativePdu", sendNativePdu);
-    NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
+    NODE_SET_PROTOTYPE_METHOD(t, "_close", Close);
     target->Set(Session_symbol, t->GetFunction());
 }
 
 v8::Handle<v8::Value> Session::New(const v8::Arguments& args) {
     v8::HandleScope scope;
-	
+
     if(0 != args.Length()) {
         return ThrowError("Must not pass any arguments to New().");
     }
@@ -161,9 +161,9 @@ v8::Handle<v8::Value> Session::Open(const v8::Arguments& args) {
     if(0 == wrap->session_) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
-	if(scope.hasException()){
-		return scope.getException();
-	}
+    if(scope.hasException()) {
+        return scope.getException();
+    }
     return v8::Undefined();
 }
 
@@ -184,19 +184,19 @@ v8::Handle<v8::Value> Session::sendNativePdu(const v8::Arguments& args) {
     }
 
     UNWRAP(Pdu, pdu, args[0]->ToObject());
-	
-	std::auto_ptr<netsnmp_pdu> copy(snmp_clone_pdu(pdu->native()));
+
+    std::auto_ptr<netsnmp_pdu> copy(snmp_clone_pdu(pdu->native()));
     std::auto_ptr<Callable> callable(new Callable(cb, args[0], copy.get()));
-	if(0 == snmp_sess_async_send(wrap->session_, copy.get(),
+    if(0 == snmp_sess_async_send(wrap->session_, copy.get(),
                                  Callable::OnEvent, callable.get())) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
     callable.release();
-	copy.release();
-	
-	if(scope.hasException()){
-		return scope.getException();
-	}
+    copy.release();
+
+    if(scope.hasException()) {
+        return scope.getException();
+    }
     return v8::Undefined();
 }
 
@@ -215,9 +215,9 @@ v8::Handle<v8::Value> Session::sendPdu(const v8::Arguments& args) {
     if (!cb->IsCallable()) {
         return ThrowError("Must pass pdu and cb arguments to sendPdu.");
     }
-	
-	std::auto_ptr<netsnmp_pdu> pdu(snmp_pdu_create(SNMP_MSG_GET));
-	v8::Handle<v8::Value> ret = Pdu::toPdu(args[0], pdu.get());
+
+    std::auto_ptr<netsnmp_pdu> pdu(snmp_pdu_create(SNMP_MSG_GET));
+    v8::Handle<v8::Value> ret = Pdu::toPdu(args[0], pdu.get());
     if(!ret->IsUndefined()) {
         return ret;
     }
@@ -230,11 +230,11 @@ v8::Handle<v8::Value> Session::sendPdu(const v8::Arguments& args) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
     callable.release();
-	pdu.release();
-	
-	if(scope.hasException()){
-		return scope.getException();
-	}
+    pdu.release();
+
+    if(scope.hasException()) {
+        return scope.getException();
+    }
     return v8::Undefined();
 }
 
@@ -320,8 +320,12 @@ v8::Handle<v8::Value> Session::onData(const v8::Arguments& args) {
 }
 
 v8::Handle<v8::Value> Session::Close(const v8::Arguments& args) {
-    v8::HandleScope scope;
     UNWRAP(Session, wrap, args.This());
+    SwapScope scope(wrap, args);
     wrap->close();
+
+    if(scope.hasException()) {
+        return scope.getException();
+    }
     return v8::Undefined();
 }

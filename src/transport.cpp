@@ -49,16 +49,16 @@ void init4(netsnmp_transport* t, struct sockaddr_in* addr, int local_port) {
     t->remote[5] = (htons(addr->sin_port) & 0x00ff) >> 0;
     t->remote_length = 6;
 
-	
+
     t->data = malloc(sizeof(netsnmp_indexed_addr_pair));
     t->data_length = sizeof(netsnmp_indexed_addr_pair);
     memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
-	
-	netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*) t->data;
-	memcpy(&pair->remote_addr, addr, sizeof(struct sockaddr_in));
 
-	pair->local_addr.sin.sin_family = addr->sin_family;
-	pair->local_addr.sin.sin_port = local_port;
+    netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*) t->data;
+    memcpy(&pair->remote_addr, addr, sizeof(struct sockaddr_in));
+
+    pair->local_addr.sin.sin_family = addr->sin_family;
+    pair->local_addr.sin.sin_port = local_port;
 }
 
 void init6(netsnmp_transport* t, struct sockaddr_in6* addr, int local_port) {
@@ -80,12 +80,12 @@ void init6(netsnmp_transport* t, struct sockaddr_in6* addr, int local_port) {
     t->data = malloc(sizeof(netsnmp_indexed_addr_pair));
     t->data_length = sizeof(netsnmp_indexed_addr_pair);
     memset(t->data, 0, sizeof(netsnmp_indexed_addr_pair));
-	
-	netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*) t->data;
-	memcpy(&pair->remote_addr, addr, sizeof(struct sockaddr_in6));
 
-	pair->local_addr.sin6.sin6_family = addr->sin6_family;
-	pair->local_addr.sin6.sin6_port = local_port;
+    netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*) t->data;
+    memcpy(&pair->remote_addr, addr, sizeof(struct sockaddr_in6));
+
+    pair->local_addr.sin6.sin6_family = addr->sin6_family;
+    pair->local_addr.sin6.sin6_port = local_port;
 }
 
 netsnmp_transport *mei_udp_transport(netsnmp_tdomain* domain, struct sockaddr_storage* addr, int local) {

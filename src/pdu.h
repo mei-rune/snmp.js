@@ -33,7 +33,6 @@ private:
     netsnmp_pdu* native_;
 
     Pdu(int type) : native_(0) {
-		printf("c %d\n", this);
         native_ = snmp_pdu_create(type);
     }
 
@@ -45,13 +44,12 @@ private:
     }
 
 public:
-	// it only use for Callable
-	void internalClear(){
+    // it only use for Callable
+    void internalClear() {
         native_ = NULL;
-	}
+    }
 
     virtual ~Pdu() {
-		printf("d %d\n", this);
         close();
     }
 

@@ -28,29 +28,20 @@
 void transport_udp_ctor(void);
 void transport_udp6_ctor(void);
 
-#define TO_STREAM(t) CONTAINING_RECORD(t,Stream, t_);
+#define TO_STREAM(t) (Stream*)t->base_transport;
 
 Stream::Stream() {
     session_ = NULL;
+    t_ = (netsnmp_transport*)calloc(1, sizeof(netsnmp_transport));
 
-    t_.f_open     = NULL;//netsnmp_udpbase_recv;
-    t_.f_recv     = &Recv;//netsnmp_udpbase_recv;
-    t_.f_send     = &Send;//netsnmp_udpbase_send;
-    t_.f_close    = &Close;
-    t_.f_accept   = NULL;
-    t_.f_fmtaddr  = NULL;//netsnmp_udp_fmtaddr;
-    t_.f_setup_session  = &SetupSession;
-    t_.f_copy     = NULL;//netsnmp_udp_fmtaddr;
-    t_.f_config   = NULL;//netsnmp_udp_fmtaddr;
+    t_->f_recv     = &Recv;
+    t_->f_send     = &Send;
+    t_->f_close    = &Close;
+    t_->f_setup_session  = &SetupSession;
 
-    t_.flags      = 0;
-#ifdef FOR_STANDARDS_COMPLIANCE_OR_FUTURE_USE
-    t_.tmStateRef = NULL;
-#endif
-    t_.base_transport = NULL;
-    t_.identifier = NULL;
-
-    t_.sock       = STREAM_SOCKET;
+    // NOTE: this is hack.
+    t_->base_transport = (netsnmp_transport*)this;
+    t_->sock       = STREAM_SOCKET;
 }
 
 //bool Stream::init(struct sockaddr_storage* addr, int local) {
@@ -150,6 +141,7 @@ int Stream::Close(netsnmp_transport *t) {
     Stream* stream = TO_STREAM(t);
     Session* session = stream->session_;
     session->on_close(stream);
+    stream->t_->base_transport = NULL;
     delete stream;
     return SNMPERR_SUCCESS;
 }

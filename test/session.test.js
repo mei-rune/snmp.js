@@ -110,10 +110,11 @@ var assertBuffer = function(assert, actual, expected) {
 
                 r = session.sendSync(pdu);
                 assert.notEqual(null, r);
+                session.close();
             },
 
 
-            'test get error': function (beforeExit, assert) {
+            'test send error': function (beforeExit, assert) {
                 var snmp = require('snmp');
                 var session = snmp.createSession();
                 var r;
@@ -131,8 +132,8 @@ var assertBuffer = function(assert, actual, expected) {
                     r = session.sendSync(pdu);
                     assert.fail();
                 } catch (e) {
-                    console.log("get error:" + e);
                 }
+                session.close();
 
             },
 
@@ -151,12 +152,10 @@ var assertBuffer = function(assert, actual, expected) {
                 pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
 
                 session.send(pdu, function (err, request, response) {
-                    console.log(response);
-                    console.log("recv result");
                     r = response;
+                    session.close();
                 });
                 beforeExit(function () {
-                    console.log(r);
                     assert.notEqual(null, r);
                 });
             }

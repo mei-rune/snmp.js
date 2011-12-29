@@ -209,11 +209,11 @@ void init(v8::Handle<v8::Object> target) {
     SNMP_INIT_SYMBOL(createSocket);
     SNMP_INIT_SYMBOL(bind);
 
-	
-	SNMP_INIT_SYMBOL(on_open);
-	SNMP_INIT_SYMBOL(on_close);
-	SNMP_INIT_SYMBOL(on_send);
-	SNMP_INIT_SYMBOL(on_recv);
+
+    SNMP_INIT_SYMBOL(on_open);
+    SNMP_INIT_SYMBOL(on_close);
+    SNMP_INIT_SYMBOL(on_send);
+    SNMP_INIT_SYMBOL(on_recv);
 
     v8::Local<v8::Object> constants = v8::Object::New();
 
@@ -453,15 +453,12 @@ void init(v8::Handle<v8::Object> target) {
 
 
     target->Set(v8::String::NewSymbol("Constants"), constants);
-
     target->Set(v8::String::NewSymbol("parseOid"), v8::FunctionTemplate::New(ParseOid)->GetFunction());
 
 
     Session::Initialize(target);
     Pdu::Initialize(target);
-	Stream::Initialize();
-
-
+    Stream::Initialize();
 }
 
 

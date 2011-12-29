@@ -36,7 +36,7 @@ public:
             : session_(session)
             , exception_(v8::Undefined())
             , args(args)
-			, thisObject(args.This()){
+            , thisObject(args.This()) {
             session_->swap_ = this;
         }
 
@@ -52,24 +52,24 @@ public:
         }
 
         void error(const char* fmt, ...) {
-			char buf[1024];
-			va_list args;
-			va_start(args, fmt);
+            char buf[1024];
+            va_list args;
+            va_start(args, fmt);
 
 #ifdef _MSC_VER
-			_vsnprintf(
+            _vsnprintf(
 #else
-			vsnprintf(
+            vsnprintf(
 #endif
-				buf, 1024, fmt, args);
+                buf, 1024, fmt, args);
 
             exception_ = ThrowError(buf);
-			va_end(args);
+            va_end(args);
         }
 
         void error(v8::Handle<v8::Value> e) {
-			exception_ = e;
-		}
+            exception_ = e;
+        }
 
         bool hasException() {
             return !exception_->IsUndefined();
@@ -98,7 +98,7 @@ private:
 
     Session() : session_(0), swap_(0) {
         snmp_sess_init(&arguments_);
-		arguments_.myvoid = this;
+        arguments_.myvoid = this;
     }
 
     void open() {
@@ -120,21 +120,21 @@ public:
         close();
     }
 
-	void makeCallback(v8::Handle<v8::Object> object,
-							  v8::Handle<v8::String> method,
-                              int argc,
-                              v8::Handle<v8::Value> argv[]) {
-	    v8::TryCatch try_catch;
+    void makeCallback(v8::Handle<v8::Object> object,
+                      v8::Handle<v8::String> method,
+                      int argc,
+                      v8::Handle<v8::Value> argv[]) {
+        v8::TryCatch try_catch;
 
-		v8::Local<v8::Value> callback = object->Get(method);
-		if (!callback->IsFunction()) {
-			v8::String::Utf8Value u8(method);
-			this->swap_->error("Object #<Session> has no method '%s'.", *u8);
-			return;
-		}
-		v8::Local<v8::Function>::Cast(callback)->Call(object, argc, argv);
+        v8::Local<v8::Value> callback = object->Get(method);
+        if (!callback->IsFunction()) {
+            v8::String::Utf8Value u8(method);
+            this->swap_->error("Object #<Session> has no method '%s'.", *u8);
+            return;
+        }
+        v8::Local<v8::Function>::Cast(callback)->Call(object, argc, argv);
         if (try_catch.HasCaught()) {
-			this->swap_->error(try_catch.Exception());
+            this->swap_->error(try_catch.Exception());
         }
     }
 
@@ -142,10 +142,10 @@ public:
         char dst[50];
 
         netsnmp_indexed_addr_pair* pair = (netsnmp_indexed_addr_pair*)stream->transport()->data;
-		
-		struct sockaddr_in* in4 = &pair->local_addr.sin;
-		struct sockaddr_in6* in6 = &pair->local_addr.sin6;
-		void* addr = (AF_INET ==  pair->local_addr.sa.sa_family)?(void*)&in4->sin_addr:(void*)&in6->sin6_addr;
+
+        struct sockaddr_in* in4 = &pair->local_addr.sin;
+        struct sockaddr_in6* in6 = &pair->local_addr.sin6;
+        void* addr = (AF_INET ==  pair->local_addr.sa.sa_family)?(void*)&in4->sin_addr:(void*)&in6->sin6_addr;
         const char *to_addr = inet_ntop( pair->local_addr.sa.sa_family, addr, dst, 50);
 
         v8::Handle<v8::Value> argv[] = {
@@ -165,9 +165,9 @@ public:
     void on_send(Stream* stream, const void *buf, int size,
                  struct sockaddr *to, socklen_t to_len) {
         char dst[50];
-		struct sockaddr_in* in4 = (struct sockaddr_in*)to;
-		struct sockaddr_in6* in6 = (struct sockaddr_in6*)to;
-		void* addr = (AF_INET == to->sa_family)?(void*)&in4->sin_addr:(void*)&in6->sin6_addr;
+        struct sockaddr_in* in4 = (struct sockaddr_in*)to;
+        struct sockaddr_in6* in6 = (struct sockaddr_in6*)to;
+        void* addr = (AF_INET == to->sa_family)?(void*)&in4->sin_addr:(void*)&in6->sin6_addr;
 
         const char *to_addr = inet_ntop(to->sa_family, addr, dst, 50);
         v8::Handle<v8::Value> argv[] = {

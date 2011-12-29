@@ -32,16 +32,16 @@ class Session;
 
 class Stream {
 private:
-    netsnmp_transport t_;
+    netsnmp_transport* t_;
     Session* session_;
 public:
     Stream();
 
     netsnmp_transport* transport() {
-        return &t_;
+        return t_;
     }
 
-	
+
     static void Initialize();
 
     static Stream* ToStream(netsnmp_transport *t);
