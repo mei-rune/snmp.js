@@ -28,20 +28,21 @@
 void transport_udp_ctor(void);
 void transport_udp6_ctor(void);
 
-#define TO_STREAM(t) (Stream*)t->base_transport;
+#define TO_STREAM(t_) CONTAINING_RECORD(t_,stream_adapter_t, t)->stream
 
 Stream::Stream() {
     session_ = NULL;
-    t_ = (netsnmp_transport*)calloc(1, sizeof(netsnmp_transport));
+    t_ = (stream_adapter_t*)calloc(1, sizeof(stream_adapter_t));
 
-    t_->f_recv     = &Recv;
-    t_->f_send     = &Send;
-    t_->f_close    = &Close;
-    t_->f_setup_session  = &SetupSession;
+    t_->t.f_recv     = &Recv;
+    t_->t.f_send     = &Send;
+    t_->t.f_close    = &Close;
+    t_->t.f_setup_session  = &SetupSession;
 
+	
+	t_->stream = this;
     // NOTE: this is hack.
-    t_->base_transport = (netsnmp_transport*)this;
-    t_->sock       = STREAM_SOCKET;
+    t_->t.sock       = STREAM_SOCKET;
 }
 
 //bool Stream::init(struct sockaddr_storage* addr, int local) {
@@ -141,7 +142,6 @@ int Stream::Close(netsnmp_transport *t) {
     Stream* stream = TO_STREAM(t);
     Session* session = stream->session_;
     session->on_close(stream);
-    stream->t_->base_transport = NULL;
     delete stream;
     return SNMPERR_SUCCESS;
 }

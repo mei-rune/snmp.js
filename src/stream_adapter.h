@@ -29,16 +29,23 @@
 #define STREAM_SOCKET   2345
 
 class Session;
+class Stream;
+
+typedef struct stream_adapter
+{
+	netsnmp_transport t;
+	Stream* stream;
+} stream_adapter_t;
 
 class Stream {
 private:
-    netsnmp_transport* t_;
+    stream_adapter_t* t_;
     Session* session_;
 public:
     Stream();
 
     netsnmp_transport* transport() {
-        return t_;
+		return &t_->t;
     }
 
 
