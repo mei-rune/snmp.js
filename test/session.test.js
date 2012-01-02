@@ -1,4 +1,5 @@
-var util = require('util');
+var util = require('util'),
+    dgram = require("dgram");
 
 var assertBuffer = function(assert, actual, expected) {
           assert.ok(Buffer.isBuffer(actual), "This isn`t a Buffer.");
@@ -97,27 +98,65 @@ var assertBuffer = function(assert, actual, expected) {
             'test get': function (beforeExit, assert) {
                 var snmp = require('snmp');
                 var session = snmp.createSession();
-                var r;
+                var rs;
+                var pdu;
+
                 session.peername = "127.0.0.1";
                 session.openSync();
 
-                var pdu = snmp.createPdu("get");
+                pdu = snmp.createPdu("get");
                 pdu.community = "public";
                 //snmpget -v 2c -c public 127.0.0.1 system.sysDescr.0
                 pdu.version = snmp.SNMP_VERSION.v2c;
                 //pdu.variableBindings.add("system.sysDescr", snmp.DATA_TYPE.ASN_NULL, null);
                 pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
 
-                r = session.sendSync(pdu);
-                assert.notEqual(null, r);
+                rs = session.sendSync(pdu);
+                assert.notEqual(null, rs);
                 session.close();
             },
 
+            'test get timeout': function (beforeExit, assert) {
+                var snmp = require('snmp');
+                var session = snmp.createSession();
+                var rs;
+                var pdu;
+                var server;
+                var recv;
+
+                session.peername = "127.0.0.1:6789";
+                session.openSync();
+                session.timeout = 1 * 1000000;
+
+                pdu = snmp.createPdu("get");
+                pdu.community = "public";
+                //snmpget -v 2c -c public 127.0.0.1 system.sysDescr.0
+                pdu.version = snmp.SNMP_VERSION.v2c;
+                //pdu.variableBindings.add("system.sysDescr", snmp.DATA_TYPE.ASN_NULL, null);
+                pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
+
+
+                server = dgram.createSocket("udp4");
+
+                server.on("message", function (msg, rinfo) {
+                    recv = msg;
+                });
+
+                server.bind(6789);
+
+                try {
+                    rs = session.sendSync(pdu);
+                    assert.fail();
+                } catch (e) {
+                }
+                session.close();
+                server.close();
+            },
 
             'test send error': function (beforeExit, assert) {
                 var snmp = require('snmp');
                 var session = snmp.createSession();
-                var r;
+                var rs;
                 session.peername = "127.0.0.1:162";
                 session.openSync();
 
@@ -129,22 +168,22 @@ var assertBuffer = function(assert, actual, expected) {
                 pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
 
                 try {
-                    r = session.sendSync(pdu);
+                    rs = session.sendSync(pdu);
                     assert.fail();
                 } catch (e) {
                 }
                 session.close();
-
             },
 
             'test async get': function (beforeExit, assert) {
                 var snmp = require('snmp');
                 var session = snmp.createSession();
-                var r;
+                var rs;
+                var pdu;
                 session.peername = "mei:127.0.0.1:161";
                 session.open();
 
-                var pdu = snmp.createPdu("get");
+                pdu = snmp.createPdu("get");
                 pdu.community = "public";
                 //snmpget -v 2c -c public 127.0.0.1 system.sysDescr.0
                 pdu.version = snmp.SNMP_VERSION.v2c;
@@ -152,13 +191,56 @@ var assertBuffer = function(assert, actual, expected) {
                 pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
 
                 session.send(pdu, function (err, request, response) {
-                    r = response;
+                    rs = response;
                     session.close();
                 });
+
                 beforeExit(function () {
-                    assert.notEqual(null, r);
+                    assert.notEqual(null, rs);
+                });
+            },
+
+            'test async get timeout': function (beforeExit, assert) {
+                var snmp = require('snmp');
+                var session = snmp.createSession();
+                var rs;
+                var pdu;
+                var server;
+                var recv;
+                var error;
+
+                session.peername = "mei:127.0.0.1:6789";
+                session.open();
+
+                pdu = snmp.createPdu("get");
+                pdu.community = "public";
+                //snmpget -v 2c -c public 127.0.0.1 system.sysDescr.0
+                pdu.version = snmp.SNMP_VERSION.v2c;
+                //pdu.variableBindings.add("system.sysDescr", snmp.DATA_TYPE.ASN_NULL, null);
+                pdu.variableBindings.add("1.3.6.1.2.1.1.1.0", snmp.DATA_TYPE.ASN_NULL, null);
+
+                server = dgram.createSocket("udp4");
+                server.on("message", function (msg, rinfo) {
+                    recv = msg;
+                    server.close();
+                });
+
+                server.on('error', function (exception) {
+                    server.close();
+                });
+
+                server.bind(6789);
+
+                session.send(pdu, function (err, request, response) {
+                    error = err;
+                    rs = response;
+                    session.close();
+                });
+
+                beforeExit(function () {
+                    assert.equal("timeout", error);
+                    assert.notEqual(null, rs);
                 });
             }
-
 
         };

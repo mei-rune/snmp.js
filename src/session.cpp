@@ -132,6 +132,7 @@ void Session::Initialize(v8::Handle<v8::Object> target) {
 
     NODE_SET_PROTOTYPE_METHOD(t, "_open", Open);
     NODE_SET_PROTOTYPE_METHOD(t, "_onData", onData);
+    NODE_SET_PROTOTYPE_METHOD(t, "_onTimeout", onTimeout);
     NODE_SET_PROTOTYPE_METHOD(t, "_readData", readData);
     NODE_SET_PROTOTYPE_METHOD(t, "_sendPdu", sendPdu);
     NODE_SET_PROTOTYPE_METHOD(t, "_sendNativePdu", sendNativePdu);
@@ -263,13 +264,44 @@ v8::Handle<v8::Value> Session::readData(const v8::Arguments& args) {
     * block output: set to 1 if output timeout value is undefined
     * set to 0 if output rimeout vlaue id defined
     */
-    snmp_sess_select_info(wrap->session_, &numfds, &fdset,
-                          &timeout, &block);
+    if(0 == snmp_sess_select_info(wrap->session_, &numfds, &fdset,
+		&timeout, &block)) {
+		snmp_sess_timeout(wrap->session_);
+		goto error;
+	}
+
+	if(0 == block) {
+		int ret = select(numfds, &fdset, 0, 0, &timeout);
+		if(SOCKET_ERROR == ret || 0 == ret) {
+			snmp_sess_timeout(wrap->session_);
+			goto error;
+		}
+	}
 
     if(-1 == snmp_sess_read(wrap->session_, &fdset)) {
         return ThrowError(snmp_api_errstring(wrap->arguments_.s_snmp_errno));
     }
+error:
     return v8::Undefined();
+}
+
+v8::Handle<v8::Value> Session::onTimeout(const v8::Arguments& args) {
+    UNWRAP(Session, wrap, args.This());
+    SwapScope scope(wrap, args);
+    if(0 == wrap->session_) {
+        return ThrowError("Session hasn't opened.");
+    }
+
+    if(0 != args.Length()) {
+        return ThrowError("Must not pass any arguments to onTimeout.");
+    }
+
+	snmp_sess_timeout(wrap->session_);
+
+    if(scope.hasException()) {
+        return scope.getException();
+    }
+	return v8::Undefined();
 }
 
 v8::Handle<v8::Value> Session::onData(const v8::Arguments& args) {
@@ -286,7 +318,7 @@ v8::Handle<v8::Value> Session::onData(const v8::Arguments& args) {
     }
 
     if(2 != args.Length()) {
-        return ThrowError("Must not pass the msg and rinfo arguments to onData.");
+        return ThrowError("Must pass the msg and rinfo arguments to onData.");
     }
 
     FD_ZERO(&fdset);

@@ -228,6 +228,8 @@ public:
 
     static v8::Handle<v8::Value> onData(const v8::Arguments& args);
 
+    static v8::Handle<v8::Value> onTimeout(const v8::Arguments& args);
+
     static v8::Handle<v8::Value> Close(const v8::Arguments& args);
 
     SNMP_ACCESSOR_DEFINE(Session, arguments_. , long,  version);
