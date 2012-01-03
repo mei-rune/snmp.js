@@ -48,7 +48,7 @@ public:
 
         v8::TryCatch try_catch;
         v8::Handle<v8::Value> args[] = {
-            v8::Undefined(), wrap->pdu_, Pdu::fromPdu(pdu)
+			v8::Undefined(), wrap->pdu_, Pdu::New(pdu) 
         };
 
 
@@ -186,7 +186,7 @@ v8::Handle<v8::Value> Session::sendNativePdu(const v8::Arguments& args) {
 
     UNWRAP(Pdu, pdu, args[0]->ToObject());
 
-    std::auto_ptr<netsnmp_pdu> copy(snmp_clone_pdu(pdu->native()));
+	std::auto_ptr<netsnmp_pdu> copy(pdu->is_owner()? pdu->release() : snmp_clone_pdu(pdu->native()));
     std::auto_ptr<Callable> callable(new Callable(cb, args[0], copy.get()));
     if(0 == snmp_sess_async_send(wrap->session_, copy.get(),
                                  Callable::OnEvent, callable.get())) {

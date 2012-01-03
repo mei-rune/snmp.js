@@ -76,6 +76,17 @@ void Pdu::Initialize(v8::Handle<v8::Object> target) {
     target->Set(v8::String::NewSymbol("fromNativePdu"),  v8::FunctionTemplate::New(fromNativePdu)->GetFunction());
 }
 
+
+v8::Handle<v8::Value> Pdu::New(netsnmp_pdu* native) {
+  v8::HandleScope scope;
+
+  v8::Local<v8::Value> argv[1] = { v8::Integer::New(0) };
+  v8::Local<v8::Object> instance = pdu_constructor->NewInstance(1, argv);
+  UNWRAP(Pdu, wrap, instance);
+  wrap->reset(native, false);
+  return scope.Close(instance);
+}
+
 v8::Handle<v8::Value> Pdu::New(const v8::Arguments& args) {
     v8::HandleScope scope;
     if(1 != args.Length()) {
@@ -90,7 +101,6 @@ v8::Handle<v8::Value> Pdu::New(const v8::Arguments& args) {
     pdu->Wrap(args.This());
     return args.This();
 }
-
 
 v8::Handle<v8::Value> Pdu::fromNativeVB(const netsnmp_variable_list* vb) {
 

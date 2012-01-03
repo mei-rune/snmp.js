@@ -31,23 +31,31 @@ class Pdu : node::ObjectWrap {
 
 private:
     netsnmp_pdu* native_;
+	bool owner_;
 
-    Pdu(int type) : native_(0) {
+    Pdu(int type) : native_(0), owner_(true) {
         native_ = snmp_pdu_create(type);
+    }
+	
+    Pdu(netsnmp_pdu* native) : native_(native), owner_(false) {
     }
 
     void close() {
         if (NULL != native_) {
-            snmp_free_pdu(native_);
+			if(owner_) {
+				snmp_free_pdu(native_);
+			}
             native_ = NULL;
         }
     }
 
+	void reset(netsnmp_pdu* native, bool owner) {
+		close();
+		native_ = native;
+		owner_ = owner;
+	}
+
 public:
-    // it only use for Callable
-    void internalClear() {
-        native_ = NULL;
-    }
 
     virtual ~Pdu() {
         close();
@@ -57,10 +65,24 @@ public:
         return native_;
     }
 
+	bool is_owner() {
+		return owner_;
+	}
+
+    netsnmp_pdu* release() {
+        netsnmp_pdu* native = native_;
+		native_ = NULL;
+		owner_ = false;
+		return native;
+    }
+
+
+
     static void Initialize(v8::Handle<v8::Object> target);
     static v8::Handle<v8::Value> New(const v8::Arguments& args);
-
-
+	
+	static v8::Handle<v8::Value> New(netsnmp_pdu* native);
+	
     static v8::Handle<v8::Value> fromNativeVB(const netsnmp_variable_list* vb);
 
     static bool convertValue(netsnmp_variable_list* vars

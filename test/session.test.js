@@ -232,9 +232,15 @@ var assertBuffer = function(assert, actual, expected) {
                 server.bind(6789);
 
                 session.send(pdu, function (err, request, response) {
-                    error = err;
-                    rs = response;
-                    session.close();
+                    try {
+                        error = err;
+                        rs = response;
+                        session.close();
+
+                        //console.log(util.inspect(rs.toJS(), true, null));
+                    } catch (e) {
+                        console.log(e);
+                    }
                 });
 
                 beforeExit(function () {
